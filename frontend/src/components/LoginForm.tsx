@@ -25,7 +25,7 @@ export default function LoginForm() {
     setLoading(true)
     try {
       const result = await login(loginEmail, loginPassword)
-      localStorage.setItem('token', result.access_token)
+      localStorage.setItem('token', result.accessToken)
       localStorage.setItem('user', JSON.stringify(result.user))
       router.replace('/dashboard')
     } catch (err: unknown) {
@@ -47,7 +47,7 @@ export default function LoginForm() {
         password: regPassword,
         phone: regPhone || undefined,
       })
-      localStorage.setItem('token', result.access_token)
+      localStorage.setItem('token', result.accessToken)
       localStorage.setItem('user', JSON.stringify(result.user))
       router.replace('/dashboard')
     } catch (err: unknown) {
