@@ -49,12 +49,13 @@ export class UsersController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a user' })
+  @Roles('ADMIN', 'MANAGER')
+  @ApiOperation({ summary: 'Update a user (ADMIN/MANAGER only)' })
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateUserDto,
     @CurrentUser() user: any,
   ) {
-    return this.usersService.update(id, dto, user.companyId);
+    return this.usersService.update(id, dto, user.companyId, user.role);
   }
 }

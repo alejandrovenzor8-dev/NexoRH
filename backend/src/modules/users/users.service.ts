@@ -86,17 +86,22 @@ export class UsersService {
     return user;
   }
 
-  async update(id: string, dto: UpdateUserDto, companyId: string) {
+  async update(id: string, dto: UpdateUserDto, companyId: string, requestingUserRole: string) {
     await this.findOne(id, companyId);
+
+    const data: any = {
+      ...(dto.fullName && { fullName: dto.fullName }),
+      ...(dto.phone && { phone: dto.phone }),
+      ...(dto.status && { status: dto.status }),
+    };
+
+    if (dto.role && requestingUserRole === 'ADMIN') {
+      data.role = dto.role;
+    }
 
     const user = await this.prisma.user.update({
       where: { id },
-      data: {
-        ...(dto.fullName && { fullName: dto.fullName }),
-        ...(dto.phone && { phone: dto.phone }),
-        ...(dto.role && { role: dto.role }),
-        ...(dto.status && { status: dto.status }),
-      },
+      data,
       select: {
         id: true,
         fullName: true,
