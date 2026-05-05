@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  # PostgreSQL database
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexorh_db
+    environment:
+      POSTGRES_USER: nexorh
+      POSTGRES_PASSWORD: nexorh
+      POSTGRES_DB: nexorh
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U nexorh']
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - nexorh_network
+
+  # NestJS Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nexorh_backend
+    environment:
+      DATABASE_URL: postgresql://nexorh:nexorh@postgres:5432/nexorh
+      JWT_SECRET: nexorh-super-secret-jwt-key-change-in-production
+      JWT_EXPIRATION: 7d
+      PORT: 3001
+    ports:
+      - '3001:3001'
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - nexorh_network
+    command: sh -c "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"
+
+  # Next.js Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nexorh_frontend
+    environment:
+      # NEXT_PUBLIC_API_URL must point to the host-accessible backend URL
+      # because client-side Next.js code runs in the user's browser, not inside Docker
+      NEXT_PUBLIC_API_URL: http://localhost:3001
+    ports:
+      - '3000:3000'
+    depends_on:
+      - backend
+    networks:
+      - nexorh_network
+
+volumes:
+  postgres_data:
+
+networks:
+  nexorh_network:
+    driver: bridge
