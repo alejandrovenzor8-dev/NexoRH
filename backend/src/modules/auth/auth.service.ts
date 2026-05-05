@@ -78,7 +78,17 @@ export class AuthService {
     return this.jwtService.sign(payload);
   }
 
-  private sanitizeUser(user: any) {
+  private sanitizeUser(user: {
+    id: string;
+    fullName: string;
+    email: string;
+    passwordHash: string;
+    phone: string | null;
+    role: string;
+    status: string;
+    companyId: string;
+    createdAt: Date;
+  }) {
     const { passwordHash, ...rest } = user;
     return rest;
   }

@@ -89,7 +89,12 @@ export class UsersService {
   async update(id: string, dto: UpdateUserDto, companyId: string, requestingUserRole: string) {
     await this.findOne(id, companyId);
 
-    const data: any = {
+    const data: {
+      fullName?: string;
+      phone?: string;
+      status?: string;
+      role?: string;
+    } = {
       ...(dto.fullName && { fullName: dto.fullName }),
       ...(dto.phone && { phone: dto.phone }),
       ...(dto.status && { status: dto.status }),
