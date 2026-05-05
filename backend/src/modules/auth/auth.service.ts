@@ -89,7 +89,7 @@ export class AuthService {
     companyId: string;
     createdAt: Date;
   }) {
-    const { passwordHash, ...rest } = user;
+    const { passwordHash: _passwordHash, ...rest } = user;
     return rest;
   }
 }

@@ -95,9 +95,9 @@ export class UsersService {
       status?: string;
       role?: string;
     } = {
-      ...(dto.fullName && { fullName: dto.fullName }),
-      ...(dto.phone && { phone: dto.phone }),
-      ...(dto.status && { status: dto.status }),
+      ...(dto.fullName !== undefined && { fullName: dto.fullName }),
+      ...(dto.phone !== undefined && { phone: dto.phone }),
+      ...(dto.status !== undefined && { status: dto.status }),
     };
 
     if (dto.role && requestingUserRole === 'ADMIN') {
