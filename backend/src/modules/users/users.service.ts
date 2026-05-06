@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateUserDto } from './dto/create-user.dto';
+import { CreateUserDto, Role } from './dto/create-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 import * as bcrypt from 'bcrypt';
 
@@ -93,7 +93,7 @@ export class UsersService {
       fullName?: string;
       phone?: string;
       status?: string;
-      role?: string;
+      role?: Role;
     } = {
       ...(dto.fullName !== undefined && { fullName: dto.fullName }),
       ...(dto.phone !== undefined && { phone: dto.phone }),
