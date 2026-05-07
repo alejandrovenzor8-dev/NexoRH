@@ -1,3 +1,71 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+:root {
+	--color-primary-50: #eff6ff;
+	--color-primary-100: #dbeafe;
+	--color-primary-500: #2563eb;
+	--color-primary-600: #1d4ed8;
+	--color-primary-700: #1e40af;
+
+	--color-success-50: #ecfdf5;
+	--color-success-100: #d1fae5;
+	--color-success-500: #10b981;
+	--color-success-600: #059669;
+
+	--color-warning-50: #fffbeb;
+	--color-warning-100: #fef3c7;
+	--color-warning-500: #f59e0b;
+	--color-warning-600: #d97706;
+
+	--color-danger-50: #fef2f2;
+	--color-danger-100: #fee2e2;
+	--color-danger-500: #ef4444;
+	--color-danger-600: #dc2626;
+
+	--color-sidebar-900: #0f172a;
+	--color-sidebar-800: #1e293b;
+
+	--color-background: #f8fafc;
+	--color-card: #ffffff;
+	--color-muted: #64748b;
+
+	--space-xs: 0.25rem;
+	--space-sm: 0.5rem;
+	--space-md: 1rem;
+	--space-lg: 1.5rem;
+	--space-xl: 2rem;
+
+	--radius-card: 0.875rem;
+	--radius-button: 0.625rem;
+	--radius-modal: 1rem;
+
+	--shadow-card: 0 1px 2px 0 rgb(15 23 42 / 0.06), 0 1px 1px -1px rgb(15 23 42 / 0.06);
+	--shadow-hover: 0 10px 20px -10px rgb(15 23 42 / 0.25);
+	--shadow-modal: 0 24px 48px -24px rgb(15 23 42 / 0.4);
+
+	--font-heading: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+	--font-body: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+	--font-caption: ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif;
+}
+
+@layer base {
+	body {
+		@apply bg-background text-slate-900 font-body;
+	}
+
+	h1,
+	h2,
+	h3,
+	h4,
+	h5,
+	h6 {
+		@apply font-heading tracking-tight;
+	}
+
+	small,
+	.caption {
+		@apply font-caption text-xs text-muted;
+	}
+}

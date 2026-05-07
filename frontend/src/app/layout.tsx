@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'NexoRH - Gestión de RRHH',
+  title: 'NexoRH',
   description: 'Sistema de gestión de recursos humanos multi-empresa para PYMEs',
 }
 
