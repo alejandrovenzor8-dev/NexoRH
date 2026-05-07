@@ -28,6 +28,7 @@ import StatCard from '@/components/ui/StatCard'
 import { getCurrentUser, getUsers, User } from '@/services/api'
 import { mapUsersToEmployees } from '@/components/employees/employee-data'
 import { EmployeeRecord } from '@/components/employees/types'
+import { generatePermissionRequests } from '@/components/permissions/permissions-data'
 
 type PermissionStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
 
@@ -104,33 +105,6 @@ function dayDiff(start: string, end: string) {
   return Math.max(1, Math.floor((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1)
 }
 
-function generateRequests(employees: EmployeeRecord[]): PermissionRequest[] {
-  const managers = employees.filter((e) => e.role === 'ADMIN' || e.role === 'MANAGER')
-
-  return employees.slice(0, 16).map((employee, index) => {
-    const start = isoDateOffset(-index * 3)
-    const end = isoDateOffset(-index * 3 + (index % 4) + 1)
-    const statusCycle: PermissionStatus[] = ['pending', 'approved', 'rejected', 'cancelled']
-    const type = REQUEST_TYPES[index % REQUEST_TYPES.length]
-    const manager = managers[index % Math.max(1, managers.length)]
-
-    return {
-      id: `req-${employee.id.slice(0, 6)}-${index}`,
-      employeeId: employee.id,
-      employeeName: employee.fullName,
-      employeeEmail: employee.email,
-      department: employee.department,
-      type,
-      startDate: start,
-      endDate: end,
-      duration: dayDiff(start, end),
-      status: statusCycle[index % statusCycle.length],
-      manager: manager ? manager.fullName : 'Sin asignar',
-      updatedAt: isoDateOffset(-index),
-    }
-  })
-}
-
 function PermissionsSkeleton() {
   return (
     <div className="space-y-6 animate-pulse">
@@ -163,7 +137,6 @@ export default function PermissionsPage() {
   const [loading, setLoading] = useState(true)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [page, setPage] = useState(1)
-  const [detail, setDetail] = useState<PermissionRequest | null>(null)
   const [toast, setToast] = useState<{ tone: 'success' | 'error' | 'info'; message: string } | null>(null)
   const [pendingAction, setPendingAction] = useState<{ id: string; action: 'approve' | 'reject' | 'cancel' } | null>(null)
   const [newRequestOpen, setNewRequestOpen] = useState(false)
@@ -196,7 +169,7 @@ export default function PermissionsPage() {
         const mappedEmployees = mapUsersToEmployees(allUsers)
         setUser(currentUser)
         setEmployees(mappedEmployees)
-        setRequests(generateRequests(mappedEmployees))
+        setRequests(generatePermissionRequests(mappedEmployees))
         setNewRequestForm((prev) => ({
           ...prev,
           employeeId: mappedEmployees[0]?.id ?? '',
@@ -371,7 +344,7 @@ export default function PermissionsPage() {
                   className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                   onClick={() => {
                     setOpenMenuId(null)
-                    setDetail(row)
+                    router.push(`/permissions/${row.id}`)
                   }}
                 >
                   <Eye className="w-4 h-4" />
@@ -543,24 +516,6 @@ export default function PermissionsPage() {
           </>
         )}
       </section>
-
-      <Modal
-        open={Boolean(detail)}
-        onClose={() => setDetail(null)}
-        title="Detalle de solicitud"
-        description="Informacion completa de la ausencia seleccionada"
-      >
-        {detail ? (
-          <div className="space-y-3 text-sm text-gray-700">
-            <p><strong className="text-gray-900">Empleado:</strong> {detail.employeeName}</p>
-            <p><strong className="text-gray-900">Tipo:</strong> {detail.type}</p>
-            <p><strong className="text-gray-900">Rango:</strong> {humanDate(detail.startDate)} - {humanDate(detail.endDate)}</p>
-            <p><strong className="text-gray-900">Duracion:</strong> {detail.duration} dia(s)</p>
-            <p><strong className="text-gray-900">Manager:</strong> {detail.manager}</p>
-            <p><strong className="text-gray-900">Estado:</strong> <span className="ml-1">{STATUS_BADGE[detail.status]}</span></p>
-          </div>
-        ) : null}
-      </Modal>
 
       <Modal
         open={Boolean(pendingAction)}
