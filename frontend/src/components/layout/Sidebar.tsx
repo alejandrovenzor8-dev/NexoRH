@@ -22,16 +22,36 @@ interface NavItem {
   disabled?: boolean
 }
 
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-  { label: 'Empleados', href: '/employees', icon: Users },
-  { label: 'Permisos', href: '/permissions', icon: CalendarCheck },
-  { label: 'Reclutamiento', href: '/reclutamiento', icon: UserSearch, disabled: true },
-  { label: 'Mensajes', href: '/mensajes', icon: MessageSquare, disabled: true },
-  { label: 'Tableros', href: '/tableros', icon: Table2, disabled: true },
-  { label: 'Archivos', href: '/archivos', icon: FolderOpen, disabled: true },
-  { label: 'Configuración', href: '/configuracion', icon: Settings, disabled: true },
-]
+function getNavItemsByRole(role?: string): NavItem[] {
+  if (role === 'ADMIN') {
+    return [
+      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Empleados', href: '/employees', icon: Users },
+      { label: 'Permisos', href: '/permissions', icon: CalendarCheck },
+      { label: 'Reclutamiento', href: '/reclutamiento', icon: UserSearch, disabled: true },
+      { label: 'Mensajes', href: '/mensajes', icon: MessageSquare, disabled: true },
+      { label: 'Tableros', href: '/tableros', icon: Table2, disabled: true },
+      { label: 'Archivos', href: '/archivos', icon: FolderOpen, disabled: true },
+      { label: 'Configuración', href: '/configuracion', icon: Settings, disabled: true },
+    ]
+  }
+
+  if (role === 'MANAGER') {
+    return [
+      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+      { label: 'Empleados', href: '/employees', icon: Users },
+      { label: 'Permisos', href: '/permissions', icon: CalendarCheck },
+      { label: 'Mensajes', href: '/mensajes', icon: MessageSquare, disabled: true },
+      { label: 'Tableros', href: '/tableros', icon: Table2, disabled: true },
+    ]
+  }
+
+  return [
+    { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { label: 'Permisos', href: '/permissions', icon: CalendarCheck },
+    { label: 'Mensajes', href: '/mensajes', icon: MessageSquare, disabled: true },
+  ]
+}
 
 interface SidebarProps {
   user: { fullName: string; email: string; role: string } | null
@@ -63,6 +83,8 @@ export default function Sidebar({
     .join('')
     .toUpperCase() ?? '?'
 
+  const navItems = getNavItemsByRole(user?.role)
+
   const sidebarContent = (
     <div className="flex flex-col h-full">
       {/* Logo */}
@@ -92,7 +114,7 @@ export default function Sidebar({
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-4 px-2 space-y-0.5">
-        {NAV_ITEMS.map((item) => {
+        {navItems.map((item) => {
           const Icon = item.icon
           const isActive = pathname === item.href
           return (

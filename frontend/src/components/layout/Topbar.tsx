@@ -2,8 +2,9 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Menu, Search, Bell, ChevronDown, LogOut, User } from 'lucide-react'
+import { Menu, Search, ChevronDown, LogOut, User } from 'lucide-react'
 import { logout } from '@/services/api'
+import NotificationsDropdown from '@/components/notifications/NotificationsDropdown'
 
 interface Breadcrumb {
   label: string
@@ -83,10 +84,7 @@ export default function Topbar({ user, breadcrumbs = [], onMobileMenuOpen }: Top
         </button>
 
         {/* Notifications */}
-        <button className="relative p-2 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors">
-          <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 bg-blue-600 rounded-full" />
-        </button>
+        <NotificationsDropdown role={user?.role} />
 
         {/* User dropdown */}
         <div className="relative ml-1">

@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import {
   CalendarCheck,
   CalendarClock,
-  CalendarX2,
   CheckCircle2,
   Clock3,
   Eye,
@@ -28,30 +27,16 @@ import StatCard from '@/components/ui/StatCard'
 import { getCurrentUser, getUsers, User } from '@/services/api'
 import { mapUsersToEmployees } from '@/components/employees/employee-data'
 import { EmployeeRecord } from '@/components/employees/types'
-import { generatePermissionRequests } from '@/components/permissions/permissions-data'
-
-type PermissionStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
-
-type PermissionType =
-  | 'Vacaciones'
-  | 'Permiso personal'
-  | 'Incapacidad'
-  | 'Home office'
-
-interface PermissionRequest {
-  id: string
-  employeeId: string
-  employeeName: string
-  employeeEmail: string
-  department: string
-  type: PermissionType
-  startDate: string
-  endDate: string
-  duration: number
-  status: PermissionStatus
-  manager: string
-  updatedAt: string
-}
+import {
+  dayDiff,
+  generatePermissionRequests,
+  humanDate,
+  isoDateOffset,
+  PermissionRequest,
+  PermissionStatus,
+  PermissionType,
+  REQUEST_TYPES,
+} from '@/components/permissions/permissions-data'
 
 interface PermissionFilters {
   query: string
@@ -69,6 +54,8 @@ interface NewRequestForm {
   endDate: string
 }
 
+type AppRole = 'ADMIN' | 'MANAGER' | 'USER'
+
 const STATUS_BADGE: Record<PermissionStatus, React.ReactNode> = {
   pending: <Badge variant="warning">Pendiente</Badge>,
   approved: <Badge variant="success">Aprobada</Badge>,
@@ -76,34 +63,7 @@ const STATUS_BADGE: Record<PermissionStatus, React.ReactNode> = {
   cancelled: <Badge variant="muted">Cancelada</Badge>,
 }
 
-const REQUEST_TYPES: PermissionType[] = [
-  'Vacaciones',
-  'Permiso personal',
-  'Incapacidad',
-  'Home office',
-]
-
 const PAGE_SIZE = 8
-
-function isoDateOffset(offsetDays: number) {
-  const d = new Date()
-  d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
-}
-
-function humanDate(date: string) {
-  return new Date(date).toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  })
-}
-
-function dayDiff(start: string, end: string) {
-  const startMs = new Date(start).getTime()
-  const endMs = new Date(end).getTime()
-  return Math.max(1, Math.floor((endMs - startMs) / (1000 * 60 * 60 * 24)) + 1)
-}
 
 function PermissionsSkeleton() {
   return (
@@ -172,7 +132,7 @@ export default function PermissionsPage() {
         setRequests(generatePermissionRequests(mappedEmployees))
         setNewRequestForm((prev) => ({
           ...prev,
-          employeeId: mappedEmployees[0]?.id ?? '',
+          employeeId: mappedEmployees.find((e) => e.id === currentUser.id)?.id ?? mappedEmployees[0]?.id ?? '',
         }))
       })
       .catch(() => {
@@ -198,10 +158,25 @@ export default function PermissionsPage() {
     [employees],
   )
 
+  const currentRole: AppRole = user?.role === 'ADMIN' || user?.role === 'MANAGER' ? user.role : 'USER'
+  const currentEmployee = useMemo(() => employees.find((e) => e.id === user?.id), [employees, user?.id])
+  const canApproveReject = currentRole === 'ADMIN' || currentRole === 'MANAGER'
+  const canCreateRequest = currentRole === 'USER'
+
+  const scopedRequests = useMemo(() => {
+    if (!user) return []
+    if (currentRole === 'ADMIN') return requests
+    if (currentRole === 'MANAGER') {
+      if (!currentEmployee) return []
+      return requests.filter((r) => r.department === currentEmployee.department)
+    }
+    return requests.filter((r) => r.employeeId === user.id)
+  }, [requests, user, currentRole, currentEmployee])
+
   const filtered = useMemo(() => {
     const query = filters.query.trim().toLowerCase()
 
-    const list = requests.filter((item) => {
+    const list = scopedRequests.filter((item) => {
       const matchesQuery =
         query.length === 0 ||
         item.employeeName.toLowerCase().includes(query) ||
@@ -225,7 +200,7 @@ export default function PermissionsPage() {
       if (filters.sort === 'start-asc') return new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
       return new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
     })
-  }, [requests, filters])
+  }, [scopedRequests, filters])
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE))
   const currentPage = Math.min(page, totalPages)
@@ -233,14 +208,26 @@ export default function PermissionsPage() {
   const paged = filtered.slice(startIndex, startIndex + PAGE_SIZE)
 
   const stats = useMemo(() => ({
-    pending: requests.filter((r) => r.status === 'pending').length,
-    approved: requests.filter((r) => r.status === 'approved').length,
-    rejected: requests.filter((r) => r.status === 'rejected').length,
-    activeAbsences: requests.filter((r) => r.status === 'approved' && new Date(r.endDate) >= new Date()).length,
-  }), [requests])
+    pending: scopedRequests.filter((r) => r.status === 'pending').length,
+    approved: scopedRequests.filter((r) => r.status === 'approved').length,
+    rejected: scopedRequests.filter((r) => r.status === 'rejected').length,
+    activeAbsences: scopedRequests.filter((r) => r.status === 'approved' && new Date(r.endDate) >= new Date()).length,
+  }), [scopedRequests])
 
   const applyAction = () => {
     if (!pendingAction) return
+
+    if ((pendingAction.action === 'approve' || pendingAction.action === 'reject') && !canApproveReject) {
+      setToast({ tone: 'error', message: 'No tienes permisos para aprobar o rechazar solicitudes.' })
+      setPendingAction(null)
+      return
+    }
+
+    if (pendingAction.action === 'cancel' && currentRole !== 'USER') {
+      setToast({ tone: 'error', message: 'Solo los usuarios pueden cancelar sus solicitudes desde este modulo.' })
+      setPendingAction(null)
+      return
+    }
 
     const nextStatus: Record<typeof pendingAction.action, PermissionStatus> = {
       approve: 'approved',
@@ -265,9 +252,19 @@ export default function PermissionsPage() {
   }
 
   const createRequest = async () => {
+    if (!canCreateRequest) {
+      setToast({ tone: 'error', message: 'Solo los usuarios pueden crear solicitudes nuevas.' })
+      return
+    }
+
     const employee = employees.find((e) => e.id === newRequestForm.employeeId)
     if (!employee) {
       setToast({ tone: 'error', message: 'Selecciona un empleado valido.' })
+      return
+    }
+
+    if (currentRole === 'USER' && user && employee.id !== user.id) {
+      setToast({ tone: 'error', message: 'Solo puedes crear solicitudes para tu propio perfil.' })
       return
     }
 
@@ -294,6 +291,26 @@ export default function PermissionsPage() {
         status: 'pending',
         manager,
         updatedAt: new Date().toISOString().slice(0, 10),
+        reason: 'Solicitud registrada por el colaborador desde el modulo de permisos.',
+        comments: ['Pendiente de revision por manager.'],
+        attachments: [],
+        approvalHistory: [
+          {
+            id: `ah-new-${Date.now()}`,
+            actor: employee.fullName,
+            action: 'Solicitud creada',
+            date: new Date().toISOString().slice(0, 10),
+          },
+        ],
+        timeline: [
+          {
+            id: `tl-new-${Date.now()}`,
+            title: 'Solicitud creada',
+            description: `${employee.fullName} registro una nueva solicitud de ${newRequestForm.type.toLowerCase()}.`,
+            date: new Date().toISOString().slice(0, 10),
+            tone: 'blue',
+          },
+        ],
       }
 
       setRequests((prev) => [newItem, ...prev])
@@ -350,39 +367,45 @@ export default function PermissionsPage() {
                   <Eye className="w-4 h-4" />
                   Ver detalle
                 </button>
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
-                  onClick={() => {
-                    setOpenMenuId(null)
-                    setPendingAction({ id: row.id, action: 'approve' })
-                  }}
-                  disabled={row.status === 'approved' || row.status === 'cancelled'}
-                >
-                  <CheckCircle2 className="w-4 h-4" />
-                  Aprobar
-                </button>
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-rose-700 hover:bg-rose-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
-                  onClick={() => {
-                    setOpenMenuId(null)
-                    setPendingAction({ id: row.id, action: 'reject' })
-                  }}
-                  disabled={row.status === 'rejected' || row.status === 'cancelled'}
-                >
-                  <XCircle className="w-4 h-4" />
-                  Rechazar
-                </button>
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-gray-600 hover:bg-gray-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
-                  onClick={() => {
-                    setOpenMenuId(null)
-                    setPendingAction({ id: row.id, action: 'cancel' })
-                  }}
-                  disabled={row.status === 'cancelled'}
-                >
-                  <ShieldAlert className="w-4 h-4" />
-                  Cancelar
-                </button>
+                {canApproveReject && (
+                  <>
+                    <button
+                      className="w-full px-3 py-2 text-sm text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
+                      onClick={() => {
+                        setOpenMenuId(null)
+                        setPendingAction({ id: row.id, action: 'approve' })
+                      }}
+                      disabled={row.status === 'approved' || row.status === 'cancelled'}
+                    >
+                      <CheckCircle2 className="w-4 h-4" />
+                      Aprobar
+                    </button>
+                    <button
+                      className="w-full px-3 py-2 text-sm text-left text-rose-700 hover:bg-rose-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
+                      onClick={() => {
+                        setOpenMenuId(null)
+                        setPendingAction({ id: row.id, action: 'reject' })
+                      }}
+                      disabled={row.status === 'rejected' || row.status === 'cancelled'}
+                    >
+                      <XCircle className="w-4 h-4" />
+                      Rechazar
+                    </button>
+                  </>
+                )}
+                {currentRole === 'USER' && (
+                  <button
+                    className="w-full px-3 py-2 text-sm text-left text-gray-600 hover:bg-gray-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
+                    onClick={() => {
+                      setOpenMenuId(null)
+                      setPendingAction({ id: row.id, action: 'cancel' })
+                    }}
+                    disabled={row.status === 'cancelled'}
+                  >
+                    <ShieldAlert className="w-4 h-4" />
+                    Cancelar
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -409,24 +432,32 @@ export default function PermissionsPage() {
       <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md mb-6">
         <SectionHeader
           title="Permisos y Ausencias"
-          description="Gestiona solicitudes, aprobaciones y ausencias del equipo"
+          description={
+            currentRole === 'ADMIN'
+              ? 'Vista global de solicitudes y ausencias de toda la organizacion'
+              : currentRole === 'MANAGER'
+              ? 'Gestiona las solicitudes del equipo a tu cargo'
+              : 'Consulta y gestiona tus solicitudes personales'
+          }
           action={
-            <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => setNewRequestOpen(true)}>
-              Nueva solicitud
-            </Button>
+            canCreateRequest ? (
+              <Button leftIcon={<Plus className="w-4 h-4" />} onClick={() => setNewRequestOpen(true)}>
+                Nueva solicitud
+              </Button>
+            ) : null
           }
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard title="Pendientes" value={stats.pending} subtitle="Esperando revision" icon={Clock3} iconColor="text-amber-600" />
-          <StatCard title="Aprobadas" value={stats.approved} subtitle="Solicitudes confirmadas" icon={CheckCircle2} iconColor="text-emerald-600" />
-          <StatCard title="Rechazadas" value={stats.rejected} subtitle="Requieren seguimiento" icon={XCircle} iconColor="text-rose-600" />
-          <StatCard title="Ausencias activas" value={stats.activeAbsences} subtitle="Hoy en curso" icon={CalendarClock} iconColor="text-blue-600" />
+          <StatCard title="Pendientes" value={stats.pending} subtitle={currentRole === 'ADMIN' ? 'Esperando revision global' : currentRole === 'MANAGER' ? 'Pendientes de tu equipo' : 'Tus solicitudes pendientes'} icon={Clock3} iconColor="text-amber-600" />
+          <StatCard title="Aprobadas" value={stats.approved} subtitle={currentRole === 'ADMIN' ? 'Solicitudes confirmadas' : currentRole === 'MANAGER' ? 'Aprobadas en tu equipo' : 'Tus solicitudes aprobadas'} icon={CheckCircle2} iconColor="text-emerald-600" />
+          <StatCard title="Rechazadas" value={stats.rejected} subtitle={currentRole === 'ADMIN' ? 'Requieren seguimiento' : currentRole === 'MANAGER' ? 'Rechazadas de tu equipo' : 'Tus solicitudes rechazadas'} icon={XCircle} iconColor="text-rose-600" />
+          <StatCard title="Ausencias activas" value={stats.activeAbsences} subtitle={currentRole === 'USER' ? 'Tus ausencias activas' : 'Hoy en curso'} icon={CalendarClock} iconColor="text-blue-600" />
         </div>
       </section>
 
       <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-6 gap-3 mb-5">
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${currentRole === 'USER' ? 'xl:grid-cols-5' : 'xl:grid-cols-6'} gap-3 mb-5`}>
           <div className="xl:col-span-2">
             <Input
               value={filters.query}
@@ -460,6 +491,7 @@ export default function PermissionsPage() {
               { label: 'Departamento', value: 'all' },
               ...departmentOptions.map((d) => ({ label: d, value: d })),
             ]}
+            className={currentRole === 'USER' ? 'hidden' : ''}
           />
           <Input
             type="date"
@@ -492,8 +524,20 @@ export default function PermissionsPage() {
           <div className="rounded-xl border border-gray-200/80 bg-gray-50/50">
             <EmptyState
               icon={CalendarCheck}
-              title="No hay solicitudes registradas"
-              description="Crea una nueva solicitud o ajusta los filtros para ver resultados."
+              title={
+                currentRole === 'USER'
+                  ? 'No tienes solicitudes registradas'
+                  : currentRole === 'MANAGER'
+                  ? 'No hay solicitudes del equipo'
+                  : 'No hay solicitudes registradas'
+              }
+              description={
+                currentRole === 'USER'
+                  ? 'Crea tu primera solicitud o ajusta filtros para encontrar registros previos.'
+                  : currentRole === 'MANAGER'
+                  ? 'Cuando tu equipo genere solicitudes, apareceran en esta vista.'
+                  : 'Crea una nueva solicitud o ajusta los filtros para ver resultados.'
+              }
             />
           </div>
         ) : (
@@ -537,7 +581,7 @@ export default function PermissionsPage() {
       </Modal>
 
       <Modal
-        open={newRequestOpen}
+        open={newRequestOpen && canCreateRequest}
         onClose={() => setNewRequestOpen(false)}
         title="Nueva solicitud"
         description="Registra una nueva solicitud de permiso o ausencia"
@@ -559,7 +603,11 @@ export default function PermissionsPage() {
             label="Empleado"
             value={newRequestForm.employeeId}
             onChange={(e) => setNewRequestForm((prev) => ({ ...prev, employeeId: e.target.value }))}
-            options={employees.map((e) => ({ label: `${e.fullName} - ${e.department}`, value: e.id }))}
+            options={(currentRole === 'USER' && user
+              ? employees.filter((e) => e.id === user.id)
+              : employees
+            ).map((e) => ({ label: `${e.fullName} - ${e.department}`, value: e.id }))}
+            disabled={currentRole === 'USER'}
           />
           <Select
             label="Tipo"

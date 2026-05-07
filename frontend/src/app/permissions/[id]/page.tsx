@@ -28,6 +28,8 @@ import {
   PermissionStatus,
 } from '@/components/permissions/permissions-data'
 
+type AppRole = 'ADMIN' | 'MANAGER' | 'USER'
+
 const STATUS_BADGE: Record<PermissionStatus, React.ReactNode> = {
   pending: <Badge variant="warning">Pendiente</Badge>,
   approved: <Badge variant="success">Aprobada</Badge>,
@@ -78,9 +80,18 @@ export default function PermissionDetailPage() {
     Promise.all([getCurrentUser(token), getUsers(token)])
       .then(([currentUser, allUsers]) => {
         const employees = mapUsersToEmployees(allUsers)
+        const currentRole: AppRole = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER' ? currentUser.role : 'USER'
+        const currentEmployee = employees.find((e) => e.id === currentUser.id)
         const requests = generatePermissionRequests(employees)
+        const visibleRequests =
+          currentRole === 'ADMIN'
+            ? requests
+            : currentRole === 'MANAGER'
+            ? requests.filter((r) => (currentEmployee ? r.department === currentEmployee.department : false))
+            : requests.filter((r) => r.employeeId === currentUser.id)
+
         setUser(currentUser)
-        setRequest(requests.find((r) => r.id === params.id) ?? null)
+        setRequest(visibleRequests.find((r) => r.id === params.id) ?? null)
       })
       .catch(() => {
         localStorage.removeItem('token')
@@ -105,6 +116,21 @@ export default function PermissionDetailPage() {
 
   const applyAction = () => {
     if (!request || !confirmAction) return
+
+    const role: AppRole = user?.role === 'ADMIN' || user?.role === 'MANAGER' ? user.role : 'USER'
+    const canApproveReject = role === 'ADMIN' || role === 'MANAGER'
+
+    if ((confirmAction.action === 'approve' || confirmAction.action === 'reject') && !canApproveReject) {
+      setToast('No tienes permisos para aprobar o rechazar solicitudes.')
+      setConfirmAction(null)
+      return
+    }
+
+    if (confirmAction.action === 'cancel' && role !== 'USER') {
+      setToast('Solo usuarios pueden cancelar sus propias solicitudes.')
+      setConfirmAction(null)
+      return
+    }
 
     const nextStatusMap: Record<typeof confirmAction.action, PermissionStatus> = {
       approve: 'approved',
@@ -149,6 +175,11 @@ export default function PermissionDetailPage() {
   }
 
   if (!user) return null
+
+  const role: AppRole = user.role === 'ADMIN' || user.role === 'MANAGER' ? user.role : 'USER'
+  const canApproveReject = role === 'ADMIN' || role === 'MANAGER'
+  const canCancel = role === 'USER'
+  const canEdit = role === 'ADMIN' || role === 'MANAGER'
 
   if (!request) {
     return (
@@ -195,18 +226,26 @@ export default function PermissionDetailPage() {
             </div>
 
             <div className="lg:ml-auto flex flex-wrap items-center gap-2">
-              <Button onClick={() => setConfirmAction({ action: 'approve' })} disabled={request.status === 'approved' || request.status === 'cancelled'}>
-                Aprobar
-              </Button>
-              <Button variant="danger" onClick={() => setConfirmAction({ action: 'reject' })} disabled={request.status === 'rejected' || request.status === 'cancelled'}>
-                Rechazar
-              </Button>
-              <Button variant="ghost" leftIcon={<Pencil className="w-4 h-4" />} onClick={() => setToast('Edicion disponible en la siguiente iteracion del modulo.')}>
-                Editar
-              </Button>
-              <Button variant="warning" onClick={() => setConfirmAction({ action: 'cancel' })} disabled={request.status === 'cancelled'}>
-                Cancelar
-              </Button>
+              {canApproveReject && (
+                <>
+                  <Button onClick={() => setConfirmAction({ action: 'approve' })} disabled={request.status === 'approved' || request.status === 'cancelled'}>
+                    Aprobar
+                  </Button>
+                  <Button variant="danger" onClick={() => setConfirmAction({ action: 'reject' })} disabled={request.status === 'rejected' || request.status === 'cancelled'}>
+                    Rechazar
+                  </Button>
+                </>
+              )}
+              {canEdit && (
+                <Button variant="ghost" leftIcon={<Pencil className="w-4 h-4" />} onClick={() => setToast('Edicion disponible en la siguiente iteracion del modulo.')}>
+                  Editar
+                </Button>
+              )}
+              {canCancel && (
+                <Button variant="warning" onClick={() => setConfirmAction({ action: 'cancel' })} disabled={request.status === 'cancelled'}>
+                  Cancelar
+                </Button>
+              )}
             </div>
           </div>
         </CardBody>
