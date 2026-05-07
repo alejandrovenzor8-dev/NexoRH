@@ -2,59 +2,39 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import {
-  ChevronLeft,
-  ChevronRight,
-  Eye,
-  Pencil,
-  Search,
-  Slash,
-  UserX,
-  Users,
-  MoreVertical,
-} from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
 import SectionHeader from '@/components/ui/SectionHeader'
-import DataTable from '@/components/ui/DataTable'
-import StatusBadge from '@/components/ui/StatusBadge'
-import EmptyState from '@/components/ui/EmptyState'
-import Input from '@/components/ui/Input'
-import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
+import Modal from '@/components/ui/Modal'
 import { getCurrentUser, getUsers, User } from '@/services/api'
+import EmployeeStats from '@/components/employees/EmployeeStats'
+import EmployeeFilters from '@/components/employees/EmployeeFilters'
+import EmployeesTable from '@/components/employees/EmployeesTable'
+import EmployeeSkeleton from '@/components/employees/EmployeeSkeleton'
+import EmployeeEmptyState from '@/components/employees/EmployeeEmptyState'
+import { EmployeeRecord, EmployeesFiltersValue, EmployeeStatus } from '@/components/employees/types'
+import { getDepartmentOptions, mapUsersToEmployees } from '@/components/employees/employee-data'
 
-interface EmployeeRow {
-  id: string
-  avatar: string
-  name: string
-  email: string
-  role: string
-  status: string
-  joinedAt: string
-}
-
-const PAGE_SIZE = 8
-
-function formatDate(date: string) {
-  const d = new Date(date)
-  return d.toLocaleDateString('es-MX', {
-    year: 'numeric',
-    month: 'short',
-    day: '2-digit',
-  })
+interface ToastState {
+  tone: 'success' | 'info'
+  message: string
 }
 
 export default function EmployeesPage() {
   const router = useRouter()
   const [user, setUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
+  const [employees, setEmployees] = useState<EmployeeRecord[]>([])
   const [loading, setLoading] = useState(true)
-  const [query, setQuery] = useState('')
-  const [roleFilter, setRoleFilter] = useState('all')
-  const [statusFilter, setStatusFilter] = useState('all')
-  const [page, setPage] = useState(1)
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+  const [filters, setFilters] = useState<EmployeesFiltersValue>({
+    query: '',
+    role: 'all',
+    status: 'all',
+    department: 'all',
+    sort: 'name-asc',
+  })
+  const [toast, setToast] = useState<ToastState | null>(null)
+  const [pendingStatusChange, setPendingStatusChange] = useState<{ id: string; nextStatus: EmployeeStatus } | null>(null)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -70,7 +50,7 @@ export default function EmployeesPage() {
           getUsers(token),
         ])
         setUser(currentUser)
-        setUsers(allUsers)
+        setEmployees(mapUsersToEmployees(allUsers))
       } catch {
         localStorage.removeItem('token')
         localStorage.removeItem('user')
@@ -83,127 +63,57 @@ export default function EmployeesPage() {
     fetchData()
   }, [router])
 
-  const rows = useMemo<EmployeeRow[]>(() => {
-    return users.map((u) => ({
-      id: u.id,
-      avatar: u.fullName.charAt(0).toUpperCase(),
-      name: u.fullName,
-      email: u.email,
-      role: u.role,
-      status: u.status || 'active',
-      joinedAt: formatDate(u.createdAt),
-    }))
-  }, [users])
+  useEffect(() => {
+    if (!toast) return
+    const timer = window.setTimeout(() => setToast(null), 2400)
+    return () => window.clearTimeout(timer)
+  }, [toast])
 
-  const filteredRows = useMemo(() => {
-    const search = query.trim().toLowerCase()
-    return rows.filter((row) => {
+  const filteredEmployees = useMemo(() => {
+    const search = filters.query.trim().toLowerCase()
+
+    const filtered = employees.filter((row) => {
       const matchesSearch =
         search.length === 0 ||
-        row.name.toLowerCase().includes(search) ||
+        row.fullName.toLowerCase().includes(search) ||
         row.email.toLowerCase().includes(search)
 
-      const matchesRole = roleFilter === 'all' || row.role === roleFilter
-      const matchesStatus = statusFilter === 'all' || row.status === statusFilter
+      const matchesRole = filters.role === 'all' || row.role === filters.role
+      const matchesStatus = filters.status === 'all' || row.status === filters.status
+      const matchesDepartment = filters.department === 'all' || row.department === filters.department
 
-      return matchesSearch && matchesRole && matchesStatus
+      return matchesSearch && matchesRole && matchesStatus && matchesDepartment
     })
-  }, [rows, query, roleFilter, statusFilter])
 
-  useEffect(() => {
-    setPage(1)
-  }, [query, roleFilter, statusFilter])
+    const sorted = [...filtered].sort((a, b) => {
+      if (filters.sort === 'name-asc') return a.fullName.localeCompare(b.fullName)
+      if (filters.sort === 'name-desc') return b.fullName.localeCompare(a.fullName)
+      if (filters.sort === 'date-asc') return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    })
 
-  const totalPages = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE))
-  const currentPage = Math.min(page, totalPages)
-  const start = (currentPage - 1) * PAGE_SIZE
-  const paginatedRows = filteredRows.slice(start, start + PAGE_SIZE)
+    return sorted
+  }, [employees, filters])
 
-  const columns = [
-    {
-      key: 'avatar',
-      label: 'Avatar',
-      render: (row: EmployeeRow) => (
-        <div
-          title={`Avatar de ${row.name}`}
-          className="w-9 h-9 rounded-full bg-blue-100 text-blue-700 font-semibold text-sm flex items-center justify-center"
-        >
-          {row.avatar}
-        </div>
-      ),
-      className: 'w-[90px]',
-    },
-    {
-      key: 'name',
-      label: 'Nombre',
-      render: (row: EmployeeRow) => <span className="font-medium text-gray-900">{row.name}</span>,
-    },
-    {
-      key: 'email',
-      label: 'Correo',
-      render: (row: EmployeeRow) => <span className="text-gray-600">{row.email}</span>,
-    },
-    {
-      key: 'role',
-      label: 'Rol',
-      render: (row: EmployeeRow) => <StatusBadge value={row.role} variant="role" />,
-    },
-    {
-      key: 'status',
-      label: 'Estado',
-      render: (row: EmployeeRow) => <StatusBadge value={row.status} variant="status" />,
-    },
-    {
-      key: 'joinedAt',
-      label: 'Fecha ingreso',
-      render: (row: EmployeeRow) => <span className="text-gray-600">{row.joinedAt}</span>,
-    },
-    {
-      key: 'actions',
-      label: 'Acciones',
-      className: 'text-right',
-      render: (row: EmployeeRow) => {
-        const isOpen = openMenuId === row.id
-        return (
-          <div className="relative inline-flex justify-end w-full">
-            <button
-              title="Abrir acciones"
-              onClick={() => setOpenMenuId(isOpen ? null : row.id)}
-              className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors"
-            >
-              <MoreVertical className="w-4 h-4" />
-            </button>
+  const departments = useMemo(() => getDepartmentOptions(employees), [employees])
 
-            {isOpen && (
-              <div className="absolute right-0 top-9 z-20 w-44 bg-white border border-gray-200 rounded-xl shadow-lg py-1">
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  onClick={() => setOpenMenuId(null)}
-                >
-                  <Eye className="w-4 h-4" />
-                  Ver perfil
-                </button>
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-gray-700 hover:bg-gray-50 flex items-center gap-2"
-                  onClick={() => setOpenMenuId(null)}
-                >
-                  <Pencil className="w-4 h-4" />
-                  Editar
-                </button>
-                <button
-                  className="w-full px-3 py-2 text-sm text-left text-danger-600 hover:bg-danger-50 flex items-center gap-2"
-                  onClick={() => setOpenMenuId(null)}
-                >
-                  <UserX className="w-4 h-4" />
-                  Desactivar
-                </button>
-              </div>
-            )}
-          </div>
-        )
-      },
-    },
-  ]
+  const handleRequestToggle = (id: string, nextStatus: EmployeeStatus) => {
+    setPendingStatusChange({ id, nextStatus })
+  }
+
+  const applyStatusChange = () => {
+    if (!pendingStatusChange) return
+
+    setEmployees((prev) => prev.map((employee) => (
+      employee.id === pendingStatusChange.id ? { ...employee, status: pendingStatusChange.nextStatus } : employee
+    )))
+
+    setToast({
+      tone: 'success',
+      message: pendingStatusChange.nextStatus === 'active' ? 'Empleado reactivado correctamente' : 'Empleado desactivado correctamente',
+    })
+    setPendingStatusChange(null)
+  }
 
   if (loading) {
     return (
@@ -211,16 +121,7 @@ export default function EmployeesPage() {
         user={user}
         breadcrumbs={[{ label: 'NexoRH' }, { label: 'Empleados' }]}
       >
-        <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm animate-pulse">
-          <div className="h-7 w-44 bg-gray-100 rounded mb-2" />
-          <div className="h-4 w-72 bg-gray-100 rounded mb-6" />
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-            <div className="h-10 bg-gray-100 rounded-lg" />
-            <div className="h-10 bg-gray-100 rounded-lg" />
-            <div className="h-10 bg-gray-100 rounded-lg" />
-          </div>
-          <DataTable columns={columns} data={[]} keyField="id" loading />
-        </section>
+        <EmployeeSkeleton />
       </AppLayout>
     )
   }
@@ -232,104 +133,67 @@ export default function EmployeesPage() {
       user={user}
       breadcrumbs={[{ label: 'NexoRH', href: '/dashboard' }, { label: 'Empleados' }]}
     >
-      <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+      <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md mb-6">
         <SectionHeader
           title="Empleados"
-          description="Gestiona el equipo con búsquedas avanzadas, filtros y acciones por colaborador"
-          action={<Badge variant="primary">{filteredRows.length} resultados</Badge>}
+          description="Gestiona el equipo con filtros avanzados, acciones por fila y vistas de perfil"
+          action={
+            <div className="flex items-center gap-2">
+              <Badge variant="primary">{filteredEmployees.length} resultados</Badge>
+              <Button onClick={() => router.push('/employees/new')}>+ Nuevo empleado</Button>
+            </div>
+          }
         />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-5">
-          <div className="md:col-span-1">
-            <Input
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              placeholder="Buscar por nombre o correo"
-            />
-          </div>
-          <Select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            options={[
-              { label: 'Todos los roles', value: 'all' },
-              { label: 'Admin', value: 'ADMIN' },
-              { label: 'Manager', value: 'MANAGER' },
-              { label: 'Usuario', value: 'USER' },
-            ]}
-          />
-          <Select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            options={[
-              { label: 'Todos los estados', value: 'all' },
-              { label: 'Activo', value: 'active' },
-              { label: 'Inactivo', value: 'inactive' },
-              { label: 'Pendiente', value: 'pending' },
-            ]}
-          />
-        </div>
+        <EmployeeStats employees={employees} />
+      </section>
 
-        {filteredRows.length === 0 ? (
-          <div className="rounded-xl border border-gray-200/80 bg-gray-50/40">
-            <EmptyState
-              icon={users.length === 0 ? Users : Slash}
-              title={users.length === 0 ? 'No hay empleados registrados' : 'Sin coincidencias'}
-              description={
-                users.length === 0
-                  ? 'Invita a tu primer colaborador para comenzar a gestionar tu equipo.'
-                  : 'Ajusta la búsqueda o los filtros para encontrar empleados.'
-              }
-              action={{
-                label: 'Limpiar filtros',
-                onClick: () => {
-                  setQuery('')
-                  setRoleFilter('all')
-                  setStatusFilter('all')
-                },
-              }}
-            />
-          </div>
+      <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
+        <EmployeeFilters
+          value={filters}
+          departments={departments}
+          onChange={setFilters}
+          onReset={() => setFilters({ query: '', role: 'all', status: 'all', department: 'all', sort: 'name-asc' })}
+        />
+
+        {filteredEmployees.length === 0 ? (
+          <EmployeeEmptyState filtered={employees.length > 0} onResetFilters={() => setFilters({ query: '', role: 'all', status: 'all', department: 'all', sort: 'name-asc' })} />
         ) : (
-          <>
-            <DataTable
-              columns={columns}
-              data={paginatedRows}
-              keyField="id"
-              emptyMessage="No hay empleados para esta página"
-            />
-
-            <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-              <p className="text-sm text-gray-500">
-                Mostrando <strong>{start + 1}</strong> a <strong>{Math.min(start + PAGE_SIZE, filteredRows.length)}</strong> de <strong>{filteredRows.length}</strong> empleados
-              </p>
-
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  leftIcon={<ChevronLeft className="w-4 h-4" />}
-                >
-                  Anterior
-                </Button>
-                <span className="text-sm text-gray-600 min-w-20 text-center">
-                  {currentPage} / {totalPages}
-                </span>
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  rightIcon={<ChevronRight className="w-4 h-4" />}
-                >
-                  Siguiente
-                </Button>
-              </div>
-            </div>
-          </>
+          <EmployeesTable
+            employees={filteredEmployees}
+            onView={(id) => router.push(`/employees/${id}`)}
+            onEdit={(id) => router.push(`/employees/${id}/edit`)}
+            onRequestToggle={handleRequestToggle}
+          />
         )}
       </section>
+
+      <Modal
+        open={Boolean(pendingStatusChange)}
+        onClose={() => setPendingStatusChange(null)}
+        title={pendingStatusChange?.nextStatus === 'active' ? 'Confirmar reactivacion' : 'Confirmar desactivacion'}
+        description="Este cambio afecta el acceso del empleado al sistema."
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" onClick={() => setPendingStatusChange(null)}>Cancelar</Button>
+            <Button onClick={applyStatusChange}>{pendingStatusChange?.nextStatus === 'active' ? 'Reactivar' : 'Desactivar'}</Button>
+          </div>
+        }
+      >
+        <p className="text-sm text-gray-600">
+          {pendingStatusChange?.nextStatus === 'active'
+            ? 'El empleado volvera a tener acceso inmediato a su cuenta.'
+            : 'El empleado no podra iniciar sesion hasta ser reactivado.'}
+        </p>
+      </Modal>
+
+      {toast && (
+        <div className="fixed bottom-5 right-5 z-50">
+          <div className={`px-4 py-3 rounded-xl shadow-lg border text-sm font-medium animate-[fadeIn_.2s_ease-out] ${toast.tone === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 'bg-blue-50 border-blue-200 text-blue-700'}`}>
+            {toast.message}
+          </div>
+        </div>
+      )}
     </AppLayout>
   )
 }
