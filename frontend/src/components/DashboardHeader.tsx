@@ -36,7 +36,7 @@ export default function DashboardHeader({ fullName, email, role, onLogout }: Das
               onClick={onLogout}
               className="text-sm text-gray-500 hover:text-red-600 transition-colors font-medium"
             >
-              Logout
+              Cerrar sesión
             </button>
           </div>
         </div>

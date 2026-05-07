@@ -29,7 +29,7 @@ export default function LoginForm() {
       localStorage.setItem('user', JSON.stringify(result.user))
       router.replace('/dashboard')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Login failed')
+      setError(err instanceof Error ? err.message : 'Error al iniciar sesión')
     } finally {
       setLoading(false)
     }
@@ -51,7 +51,7 @@ export default function LoginForm() {
       localStorage.setItem('user', JSON.stringify(result.user))
       router.replace('/dashboard')
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Registration failed')
+      setError(err instanceof Error ? err.message : 'Error al registrarse')
     } finally {
       setLoading(false)
     }
@@ -64,7 +64,7 @@ export default function LoginForm() {
           <span className="text-white text-2xl font-bold">N</span>
         </div>
         <h1 className="text-2xl font-bold text-gray-900">NexoRH</h1>
-        <p className="text-gray-500 text-sm mt-1">HR Management Platform</p>
+        <p className="text-gray-500 text-sm mt-1">Plataforma de Gestión de RRHH</p>
       </div>
 
       <div className="flex bg-gray-100 rounded-lg p-1 mb-6">
@@ -76,7 +76,7 @@ export default function LoginForm() {
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          Sign In
+          Iniciar sesión
         </button>
         <button
           onClick={() => { setActiveTab('register'); setError('') }}
@@ -86,7 +86,7 @@ export default function LoginForm() {
               : 'text-gray-500 hover:text-gray-700'
           }`}
         >
-          Create Account
+          Crear cuenta
         </button>
       </div>
 
@@ -99,7 +99,7 @@ export default function LoginForm() {
       {activeTab === 'login' ? (
         <form onSubmit={handleLogin} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
             <input
               type="email"
               value={loginEmail}
@@ -110,7 +110,7 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input
               type="password"
               value={loginPassword}
@@ -128,18 +128,19 @@ export default function LoginForm() {
             {loading ? (
               <>
                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Signing in...
+                Iniciando sesión...
               </>
-            ) : 'Sign In'}
+            ) : 'Iniciar sesión'}
           </button>
           <p className="text-xs text-gray-400 text-center mt-2">
             Demo: admin@nexorh.com / admin123
           </p>
+
         </form>
       ) : (
         <form onSubmit={handleRegister} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Company Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre de la empresa</label>
             <input
               type="text"
               value={regCompanyName}
@@ -150,18 +151,18 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
             <input
               type="text"
               value={regFullName}
               onChange={(e) => setRegFullName(e.target.value)}
               required
-              placeholder="John Doe"
+              placeholder="Juan García"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Correo electrónico</label>
             <input
               type="email"
               value={regEmail}
@@ -172,20 +173,20 @@ export default function LoginForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <input
               type="password"
               value={regPassword}
               onChange={(e) => setRegPassword(e.target.value)}
               required
               minLength={8}
-              placeholder="Min. 8 characters"
+              placeholder="Mín. 8 caracteres"
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
             />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              Phone <span className="text-gray-400">(optional)</span>
+              Teléfono <span className="text-gray-400">(opcional)</span>
             </label>
             <input
               type="tel"
@@ -203,9 +204,9 @@ export default function LoginForm() {
             {loading ? (
               <>
                 <span className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                Creating account...
+                Creando cuenta...
               </>
-            ) : 'Create Account'}
+            ) : 'Crear cuenta'}
           </button>
         </form>
       )}

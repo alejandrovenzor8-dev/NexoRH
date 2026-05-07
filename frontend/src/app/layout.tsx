@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'NexoRH - HR Management',
-  description: 'Multi-tenant HR management system for SMBs',
+  title: 'NexoRH - Gestión de RRHH',
+  description: 'Sistema de gestión de recursos humanos multi-empresa para PYMEs',
 }
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body className="bg-gray-50 text-gray-900 min-h-screen">
         {children}
       </body>

@@ -20,11 +20,11 @@ const ROLE_COLORS: Record<string, string> = {
 }
 
 const modules = [
-  { name: 'User Management', description: 'Manage team members, roles, and permissions.', icon: '👥', active: true },
-  { name: 'Messaging', description: 'Real-time internal chat and notifications.', icon: '💬', active: false },
-  { name: 'Dynamic Tables', description: 'Custom data management with flexible schemas.', icon: '📊', active: false },
-  { name: 'Recruitment', description: 'Job postings, applications, and candidate tracking.', icon: '🎯', active: false },
-  { name: 'Automation', description: 'Event-based workflows and automated actions.', icon: '⚡', active: false },
+  { name: 'Gestión de usuarios', description: 'Administra miembros del equipo, roles y permisos.', icon: '👥', active: true },
+  { name: 'Mensajería', description: 'Chat interno y notificaciones en tiempo real.', icon: '💬', active: false },
+  { name: 'Tablas dinámicas', description: 'Gestión de datos personalizada con esquemas flexibles.', icon: '📊', active: false },
+  { name: 'Reclutamiento', description: 'Ofertas de trabajo, postulaciones y seguimiento de candidatos.', icon: '🎯', active: false },
+  { name: 'Automatización', description: 'Flujos de trabajo basados en eventos y acciones automatizadas.', icon: '⚡', active: false },
 ]
 
 export default function DashboardPage() {
@@ -70,7 +70,7 @@ export default function DashboardPage() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4" />
-          <p className="text-gray-500 text-sm">Loading dashboard...</p>
+          <p className="text-gray-500 text-sm">Cargando panel...</p>
         </div>
       </div>
     )
@@ -102,7 +102,7 @@ export default function DashboardPage() {
                 onClick={handleLogout}
                 className="text-sm text-gray-500 hover:text-red-600 transition-colors font-medium"
               >
-                Logout
+                Cerrar sesión
               </button>
             </div>
           </div>
@@ -113,38 +113,38 @@ export default function DashboardPage() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Banner */}
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl p-6 mb-8 text-white">
-          <h2 className="text-2xl font-bold mb-1">Welcome back, {user.fullName.split(' ')[0]}! 👋</h2>
+          <h2 className="text-2xl font-bold mb-1">¡Bienvenido, {user.fullName.split(' ')[0]}! 👋</h2>
           <p className="text-blue-100 text-sm">
-            You are logged in as <strong>{user.role}</strong>. Here is your dashboard overview.
+            Has iniciado sesión como <strong>{user.role}</strong>. Aquí está el resumen de tu panel.
           </p>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <div className="bg-white rounded-xl p-5 border border-gray-200">
-            <p className="text-sm text-gray-500 mb-1">Total Employees</p>
+            <p className="text-sm text-gray-500 mb-1">Total de empleados</p>
             <p className="text-3xl font-bold text-gray-900">{users.length}</p>
-            <p className="text-xs text-green-600 mt-1">In your company</p>
+            <p className="text-xs text-green-600 mt-1">En tu empresa</p>
           </div>
           <div className="bg-white rounded-xl p-5 border border-gray-200">
-            <p className="text-sm text-gray-500 mb-1">Active Users</p>
+            <p className="text-sm text-gray-500 mb-1">Usuarios activos</p>
             <p className="text-3xl font-bold text-gray-900">
               {users.filter(u => u.status === 'active').length}
             </p>
-            <p className="text-xs text-blue-600 mt-1">Currently active</p>
+            <p className="text-xs text-blue-600 mt-1">Actualmente activos</p>
           </div>
           <div className="bg-white rounded-xl p-5 border border-gray-200">
-            <p className="text-sm text-gray-500 mb-1">Modules</p>
+            <p className="text-sm text-gray-500 mb-1">Módulos</p>
             <p className="text-3xl font-bold text-gray-900">5</p>
-            <p className="text-xs text-purple-600 mt-1">Available features</p>
+            <p className="text-xs text-purple-600 mt-1">Funciones disponibles</p>
           </div>
         </div>
 
         {/* Team Members */}
         <div className="bg-white rounded-xl border border-gray-200 mb-8">
           <div className="p-5 border-b border-gray-100">
-            <h3 className="font-semibold text-gray-900">Team Members</h3>
-            <p className="text-sm text-gray-500 mt-0.5">All users in your company</p>
+            <h3 className="font-semibold text-gray-900">Miembros del equipo</h3>
+            <p className="text-sm text-gray-500 mt-0.5">Todos los usuarios de tu empresa</p>
           </div>
           <div className="divide-y divide-gray-50">
             {users.map((u) => (
@@ -164,14 +164,14 @@ export default function DashboardPage() {
               </div>
             ))}
             {users.length === 0 && (
-              <p className="text-sm text-gray-400 text-center py-8">No team members found</p>
+              <p className="text-sm text-gray-400 text-center py-8">No se encontraron miembros del equipo</p>
             )}
           </div>
         </div>
 
         {/* Modules */}
         <div>
-          <h3 className="font-semibold text-gray-900 mb-4">Platform Modules</h3>
+          <h3 className="font-semibold text-gray-900 mb-4">Módulos de la plataforma</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {modules.map((mod) => (
               <div
@@ -184,7 +184,7 @@ export default function DashboardPage() {
                   <span className="text-2xl">{mod.icon}</span>
                   {!mod.active && (
                     <span className="text-xs bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-medium">
-                      Coming Soon
+                      Próximamente
                     </span>
                   )}
                 </div>
