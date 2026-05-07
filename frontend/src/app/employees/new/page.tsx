@@ -61,7 +61,11 @@ export default function NewEmployeePage() {
           action={<Button variant="ghost" onClick={() => router.push('/employees')}>Volver</Button>}
         />
 
-        <EmployeeForm submitLabel={saved ? 'Guardado' : 'Guardar empleado'} onSubmit={handleSubmit} />
+        <EmployeeForm
+          submitLabel={saved ? 'Guardado' : 'Guardar empleado'}
+          onCancel={() => router.push('/employees')}
+          onSubmit={handleSubmit}
+        />
 
         {saved && (
           <p className="mt-3 text-sm text-emerald-600">Empleado creado correctamente. Redirigiendo...</p>

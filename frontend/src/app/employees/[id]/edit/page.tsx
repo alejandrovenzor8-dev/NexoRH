@@ -84,8 +84,10 @@ export default function EmployeeEditPage() {
               status: employee.status,
               department: employee.department,
               phone: employee.phone || '',
+              hiredAt: employee.createdAt.slice(0, 10),
             }}
             submitLabel={saved ? 'Actualizado' : 'Guardar cambios'}
+            onCancel={() => router.push(`/employees/${employee.id}`)}
             onSubmit={handleSubmit}
           />
 
