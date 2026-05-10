@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Menu, Search, ChevronDown, LogOut, User } from 'lucide-react'
 import { logout } from '@/services/api'
 import NotificationsDropdown from '@/components/notifications/NotificationsDropdown'
+import { UserSession } from '@/types/auth'
 
 interface Breadcrumb {
   label: string
@@ -12,7 +13,7 @@ interface Breadcrumb {
 }
 
 interface TopbarProps {
-  user: { fullName: string; email: string; role: string } | null
+  user: UserSession | null
   breadcrumbs?: Breadcrumb[]
   onMobileMenuOpen: () => void
 }

@@ -7,11 +7,12 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import EmployeeForm, { EmployeeFormValues } from '@/components/employees/EmployeeForm'
 import EmployeeSkeleton from '@/components/employees/EmployeeSkeleton'
-import { getCurrentUser, User } from '@/services/api'
+import { getCurrentUser } from '@/services/api'
+import { UserSession } from '@/types/auth'
 
 export default function NewEmployeePage() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)
 

@@ -7,7 +7,7 @@ import SectionHeader from '@/components/ui/SectionHeader'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
-import { getCurrentUser, getUsers, User } from '@/services/api'
+import { getCurrentUser, getUsers } from '@/services/api'
 import EmployeeStats from '@/components/employees/EmployeeStats'
 import EmployeeFilters from '@/components/employees/EmployeeFilters'
 import EmployeesTable from '@/components/employees/EmployeesTable'
@@ -15,6 +15,8 @@ import EmployeeSkeleton from '@/components/employees/EmployeeSkeleton'
 import EmployeeEmptyState from '@/components/employees/EmployeeEmptyState'
 import { EmployeeRecord, EmployeesFiltersValue, EmployeeStatus } from '@/components/employees/types'
 import { getDepartmentOptions, mapUsersToEmployees } from '@/components/employees/employee-data'
+import { EmployeeStatus as EmployeeStatusEnum } from '@/types/employee'
+import { UserSession } from '@/types/auth'
 
 interface ToastState {
   tone: 'success' | 'info'
@@ -23,7 +25,7 @@ interface ToastState {
 
 export default function EmployeesPage() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserSession | null>(null)
   const [employees, setEmployees] = useState<EmployeeRecord[]>([])
   const [loading, setLoading] = useState(true)
   const [filters, setFilters] = useState<EmployeesFiltersValue>({
@@ -110,7 +112,7 @@ export default function EmployeesPage() {
 
     setToast({
       tone: 'success',
-      message: pendingStatusChange.nextStatus === 'active' ? 'Empleado reactivado correctamente' : 'Empleado desactivado correctamente',
+      message: pendingStatusChange.nextStatus === EmployeeStatusEnum.ACTIVE ? 'Empleado reactivado correctamente' : 'Empleado desactivado correctamente',
     })
     setPendingStatusChange(null)
   }
@@ -171,17 +173,17 @@ export default function EmployeesPage() {
       <Modal
         open={Boolean(pendingStatusChange)}
         onClose={() => setPendingStatusChange(null)}
-        title={pendingStatusChange?.nextStatus === 'active' ? 'Confirmar reactivacion' : 'Confirmar desactivacion'}
+        title={pendingStatusChange?.nextStatus === EmployeeStatusEnum.ACTIVE ? 'Confirmar reactivacion' : 'Confirmar desactivacion'}
         description="Este cambio afecta el acceso del empleado al sistema."
         footer={
           <div className="flex items-center justify-end gap-2">
             <Button variant="ghost" onClick={() => setPendingStatusChange(null)}>Cancelar</Button>
-            <Button onClick={applyStatusChange}>{pendingStatusChange?.nextStatus === 'active' ? 'Reactivar' : 'Desactivar'}</Button>
+            <Button onClick={applyStatusChange}>{pendingStatusChange?.nextStatus === EmployeeStatusEnum.ACTIVE ? 'Reactivar' : 'Desactivar'}</Button>
           </div>
         }
       >
         <p className="text-sm text-gray-600">
-          {pendingStatusChange?.nextStatus === 'active'
+          {pendingStatusChange?.nextStatus === EmployeeStatusEnum.ACTIVE
             ? 'El empleado volvera a tener acceso inmediato a su cuenta.'
             : 'El empleado no podra iniciar sesion hasta ser reactivado.'}
         </p>

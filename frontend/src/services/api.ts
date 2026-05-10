@@ -1,37 +1,10 @@
+import { AuthResponse, UserSession } from '@/types';
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export interface LoginResponse {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-    companyId: string;
-  };
-}
-
-export interface RegisterResponse {
-  accessToken: string;
-  user: {
-    id: string;
-    email: string;
-    fullName: string;
-    role: string;
-    companyId: string;
-  };
-}
-
-export interface User {
-  id: string;
-  fullName: string;
-  email: string;
-  role: string;
-  status: string;
-  phone?: string;
-  companyId: string;
-  createdAt: string;
-}
+export type LoginResponse = AuthResponse;
+export type RegisterResponse = AuthResponse;
+export type User = UserSession;
 
 export async function login(email: string, password: string): Promise<LoginResponse> {
   const response = await fetch(`${API_URL}/api/auth/login`, {

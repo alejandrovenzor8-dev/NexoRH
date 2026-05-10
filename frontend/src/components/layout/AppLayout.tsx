@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Sidebar from './Sidebar'
 import Topbar from './Topbar'
+import { UserSession } from '@/types/auth'
 
 interface Breadcrumb {
   label: string
@@ -10,7 +11,7 @@ interface Breadcrumb {
 }
 
 interface AppLayoutProps {
-  user: { fullName: string; email: string; role: string } | null
+  user: UserSession | null
   children: React.ReactNode
   breadcrumbs?: Breadcrumb[]
 }

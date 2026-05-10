@@ -3,10 +3,11 @@ import DataTable from '@/components/ui/DataTable'
 import StatusBadge from '@/components/ui/StatusBadge'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
-import { User } from '@/services/api'
+import { UserSession } from '@/types/auth'
+import { EmployeeStatus } from '@/types/employee'
 
 interface TeamMembersCardProps {
-  users: User[]
+  users: UserSession[]
   loading?: boolean
 }
 
@@ -14,7 +15,7 @@ const columns = [
   {
     key: 'fullName',
     label: 'Nombre',
-    render: (u: User) => (
+    render: (u: UserSession) => (
       <div className="flex items-center gap-3">
         <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-semibold text-sm shrink-0">
           {u.fullName.charAt(0).toUpperCase()}
@@ -29,12 +30,12 @@ const columns = [
   {
     key: 'role',
     label: 'Rol',
-    render: (u: User) => <StatusBadge value={u.role} variant="role" />,
+    render: (u: UserSession) => <StatusBadge value={u.role} variant="role" />,
   },
   {
     key: 'status',
     label: 'Estado',
-    render: (u: User) => <StatusBadge value={u.status || 'active'} variant="status" />,
+    render: (u: UserSession) => <StatusBadge value={u.status || EmployeeStatus.ACTIVE} variant="status" />,
   },
 ]
 

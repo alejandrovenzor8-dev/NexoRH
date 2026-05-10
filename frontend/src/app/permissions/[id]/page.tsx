@@ -19,8 +19,10 @@ import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
-import { getCurrentUser, getUsers, User } from '@/services/api'
+import { getCurrentUser, getUsers } from '@/services/api'
+import { UserSession } from '@/types/auth'
 import { mapUsersToEmployees } from '@/components/employees/employee-data'
+import { EmployeeRole } from '@/types/employee'
 import {
   generatePermissionRequests,
   humanDate,
@@ -28,13 +30,13 @@ import {
   PermissionStatus,
 } from '@/components/permissions/permissions-data'
 
-type AppRole = 'ADMIN' | 'MANAGER' | 'USER'
+type AppRole = EmployeeRole.ADMIN | EmployeeRole.MANAGER | EmployeeRole.USER
 
 const STATUS_BADGE: Record<PermissionStatus, React.ReactNode> = {
-  pending: <Badge variant="warning">Pendiente</Badge>,
-  approved: <Badge variant="success">Aprobada</Badge>,
-  rejected: <Badge variant="danger">Rechazada</Badge>,
-  cancelled: <Badge variant="muted">Cancelada</Badge>,
+  [PermissionStatus.PENDING]: <Badge variant="warning">Pendiente</Badge>,
+  [PermissionStatus.APPROVED]: <Badge variant="success">Aprobada</Badge>,
+  [PermissionStatus.REJECTED]: <Badge variant="danger">Rechazada</Badge>,
+  [PermissionStatus.CANCELLED]: <Badge variant="muted">Cancelada</Badge>,
 }
 
 function PermissionDetailSkeleton() {
@@ -64,7 +66,7 @@ function PermissionDetailSkeleton() {
 export default function PermissionDetailPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
   const [request, setRequest] = useState<PermissionRequest | null>(null)
   const [confirmAction, setConfirmAction] = useState<{ action: 'approve' | 'reject' | 'cancel' } | null>(null)
@@ -80,13 +82,13 @@ export default function PermissionDetailPage() {
     Promise.all([getCurrentUser(token), getUsers(token)])
       .then(([currentUser, allUsers]) => {
         const employees = mapUsersToEmployees(allUsers)
-        const currentRole: AppRole = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER' ? currentUser.role : 'USER'
+        const currentRole: AppRole = currentUser.role === EmployeeRole.ADMIN || currentUser.role === EmployeeRole.MANAGER ? currentUser.role : EmployeeRole.USER
         const currentEmployee = employees.find((e) => e.id === currentUser.id)
         const requests = generatePermissionRequests(employees)
         const visibleRequests =
-          currentRole === 'ADMIN'
+          currentRole === EmployeeRole.ADMIN
             ? requests
-            : currentRole === 'MANAGER'
+            : currentRole === EmployeeRole.MANAGER
             ? requests.filter((r) => (currentEmployee ? r.department === currentEmployee.department : false))
             : requests.filter((r) => r.employeeId === currentUser.id)
 
@@ -117,8 +119,8 @@ export default function PermissionDetailPage() {
   const applyAction = () => {
     if (!request || !confirmAction) return
 
-    const role: AppRole = user?.role === 'ADMIN' || user?.role === 'MANAGER' ? user.role : 'USER'
-    const canApproveReject = role === 'ADMIN' || role === 'MANAGER'
+    const role: AppRole = user?.role === EmployeeRole.ADMIN || user?.role === EmployeeRole.MANAGER ? user.role : EmployeeRole.USER
+    const canApproveReject = role === EmployeeRole.ADMIN || role === EmployeeRole.MANAGER
 
     if ((confirmAction.action === 'approve' || confirmAction.action === 'reject') && !canApproveReject) {
       setToast('No tienes permisos para aprobar o rechazar solicitudes.')
@@ -126,16 +128,16 @@ export default function PermissionDetailPage() {
       return
     }
 
-    if (confirmAction.action === 'cancel' && role !== 'USER') {
+    if (confirmAction.action === 'cancel' && role !== EmployeeRole.USER) {
       setToast('Solo usuarios pueden cancelar sus propias solicitudes.')
       setConfirmAction(null)
       return
     }
 
     const nextStatusMap: Record<typeof confirmAction.action, PermissionStatus> = {
-      approve: 'approved',
-      reject: 'rejected',
-      cancel: 'cancelled',
+      approve: PermissionStatus.APPROVED,
+      reject: PermissionStatus.REJECTED,
+      cancel: PermissionStatus.CANCELLED,
     }
 
     const nextStatus = nextStatusMap[confirmAction.action]
@@ -149,7 +151,7 @@ export default function PermissionDetailPage() {
           title: 'Estado actualizado',
           description: `La solicitud fue marcada como ${nextStatus}.`,
           date: new Date().toISOString().slice(0, 10),
-          tone: nextStatus === 'approved' ? 'green' : nextStatus === 'rejected' ? 'gray' : 'amber',
+          tone: nextStatus === PermissionStatus.APPROVED ? 'green' : nextStatus === PermissionStatus.REJECTED ? 'gray' : 'amber',
         },
         ...request.timeline,
       ],
@@ -176,10 +178,10 @@ export default function PermissionDetailPage() {
 
   if (!user) return null
 
-  const role: AppRole = user.role === 'ADMIN' || user.role === 'MANAGER' ? user.role : 'USER'
-  const canApproveReject = role === 'ADMIN' || role === 'MANAGER'
-  const canCancel = role === 'USER'
-  const canEdit = role === 'ADMIN' || role === 'MANAGER'
+  const role: AppRole = user.role === EmployeeRole.ADMIN || user.role === EmployeeRole.MANAGER ? user.role : EmployeeRole.USER
+  const canApproveReject = role === EmployeeRole.ADMIN || role === EmployeeRole.MANAGER
+  const canCancel = role === EmployeeRole.USER
+  const canEdit = role === EmployeeRole.ADMIN || role === EmployeeRole.MANAGER
 
   if (!request) {
     return (

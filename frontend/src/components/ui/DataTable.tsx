@@ -1,12 +1,7 @@
-interface Column<T> {
-  key: keyof T | string
-  label: string
-  render?: (row: T) => React.ReactNode
-  className?: string
-}
+import type { TableColumn } from '@/types/common'
 
 interface DataTableProps<T> {
-  columns: Column<T>[]
+  columns: TableColumn<T>[]
   data: T[]
   keyField: keyof T
   emptyMessage?: string

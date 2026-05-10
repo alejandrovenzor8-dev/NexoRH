@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react'
 import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
-import { EmployeeRole, EmployeeStatus } from './types'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 export interface EmployeeFormValues {
   fullName: string
@@ -60,8 +60,8 @@ export default function EmployeeForm({
   const [form, setForm] = useState<EmployeeFormValues>({
     fullName: initialValues?.fullName ?? '',
     email: initialValues?.email ?? '',
-    role: initialValues?.role ?? 'USER',
-    status: initialValues?.status ?? 'active',
+    role: initialValues?.role ?? EmployeeRole.USER,
+    status: initialValues?.status ?? EmployeeStatus.ACTIVE,
     department: initialValues?.department ?? 'Operaciones',
     phone: initialValues?.phone ?? '',
     hiredAt: initialValues?.hiredAt ?? new Date().toISOString().slice(0, 10),
@@ -189,9 +189,9 @@ export default function EmployeeForm({
           onBlur={() => touchField('role')}
           error={errors.role}
           options={[
-            { label: 'Admin', value: 'ADMIN' },
-            { label: 'Manager', value: 'MANAGER' },
-            { label: 'Usuario', value: 'USER' },
+            { label: 'Admin', value: EmployeeRole.ADMIN },
+            { label: 'Manager', value: EmployeeRole.MANAGER },
+            { label: 'Usuario', value: EmployeeRole.USER },
           ]}
         />
         <Select
@@ -201,9 +201,9 @@ export default function EmployeeForm({
           onBlur={() => touchField('status')}
           error={errors.status}
           options={[
-            { label: 'Activo', value: 'active' },
-            { label: 'Inactivo', value: 'inactive' },
-            { label: 'Baja', value: 'baja' },
+            { label: 'Activo', value: EmployeeStatus.ACTIVE },
+            { label: 'Inactivo', value: EmployeeStatus.INACTIVE },
+            { label: 'Baja', value: EmployeeStatus.TERMINATED },
           ]}
         />
         <Input

@@ -1,8 +1,8 @@
 import { Sparkles, ShieldCheck } from 'lucide-react'
-import { User } from '@/services/api'
+import { UserSession } from '@/types/auth'
 
 interface WelcomeBannerProps {
-  user: User
+  user: UserSession
 }
 
 const ROLE_LABELS: Record<string, string> = {

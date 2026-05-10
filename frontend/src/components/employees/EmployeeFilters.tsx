@@ -3,6 +3,7 @@ import Input from '@/components/ui/Input'
 import Select from '@/components/ui/Select'
 import Button from '@/components/ui/Button'
 import { EmployeesFiltersValue } from './types'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 interface EmployeeFiltersProps {
   value: EmployeesFiltersValue
@@ -28,9 +29,9 @@ export default function EmployeeFilters({ value, departments, onChange, onReset 
         onChange={(e) => onChange({ ...value, role: e.target.value as EmployeesFiltersValue['role'] })}
         options={[
           { label: 'Todos los roles', value: 'all' },
-          { label: 'Admin', value: 'ADMIN' },
-          { label: 'Manager', value: 'MANAGER' },
-          { label: 'Usuario', value: 'USER' },
+          { label: 'Admin', value: EmployeeRole.ADMIN },
+          { label: 'Manager', value: EmployeeRole.MANAGER },
+          { label: 'Usuario', value: EmployeeRole.USER },
         ]}
       />
 
@@ -39,9 +40,9 @@ export default function EmployeeFilters({ value, departments, onChange, onReset 
         onChange={(e) => onChange({ ...value, status: e.target.value as EmployeesFiltersValue['status'] })}
         options={[
           { label: 'Todos los estados', value: 'all' },
-          { label: 'Activo', value: 'active' },
-          { label: 'Inactivo', value: 'inactive' },
-          { label: 'Baja', value: 'baja' },
+          { label: 'Activo', value: EmployeeStatus.ACTIVE },
+          { label: 'Inactivo', value: EmployeeStatus.INACTIVE },
+          { label: 'Baja', value: EmployeeStatus.TERMINATED },
         ]}
       />
 

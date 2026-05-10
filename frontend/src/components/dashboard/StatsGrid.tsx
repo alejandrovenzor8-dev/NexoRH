@@ -1,14 +1,15 @@
 import { Building2, LayoutGrid, UserCheck, Users } from 'lucide-react'
 import StatCard from '@/components/ui/StatCard'
-import { User } from '@/services/api'
+import { UserSession } from '@/types/auth'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 interface StatsGridProps {
-  users: User[]
+  users: UserSession[]
 }
 
 export default function StatsGrid({ users }: StatsGridProps) {
-  const activeUsers = users.filter((u) => (u.status ?? 'active') === 'active').length
-  const admins = users.filter((u) => u.role === 'ADMIN').length
+  const activeUsers = users.filter((u) => (u.status ?? EmployeeStatus.ACTIVE) === EmployeeStatus.ACTIVE).length
+  const admins = users.filter((u) => u.role === EmployeeRole.ADMIN).length
 
   return (
     <section className="mb-8">

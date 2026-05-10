@@ -3,17 +3,18 @@ import DataTable from '@/components/ui/DataTable'
 import EmptyState from '@/components/ui/EmptyState'
 import SectionHeader from '@/components/ui/SectionHeader'
 import StatusBadge from '@/components/ui/StatusBadge'
-import { User } from '@/services/api'
+import { UserSession } from '@/types/auth'
+import { EmployeeStatus } from '@/types/employee'
 
 interface TeamMembersListProps {
-  users: User[]
+  users: UserSession[]
 }
 
 const columns = [
   {
     key: 'fullName',
     label: 'Colaborador',
-    render: (u: User) => (
+    render: (u: UserSession) => (
       <div className="flex items-center gap-3">
         <div
           title={`Perfil de ${u.fullName}`}
@@ -34,17 +35,17 @@ const columns = [
   {
     key: 'role',
     label: 'Rol',
-    render: (u: User) => <StatusBadge value={u.role} variant="role" />,
+    render: (u: UserSession) => <StatusBadge value={u.role} variant="role" />,
   },
   {
     key: 'status',
     label: 'Estado',
-    render: (u: User) => <StatusBadge value={u.status || 'active'} variant="status" />,
+    render: (u: UserSession) => <StatusBadge value={u.status || EmployeeStatus.ACTIVE} variant="status" />,
   },
   {
     key: 'phone',
     label: 'Teléfono',
-    render: (u: User) => (
+    render: (u: UserSession) => (
       <span className="inline-flex items-center gap-1.5 text-sm text-gray-500" title={u.phone || 'Sin teléfono'}>
         <Phone className="w-3.5 h-3.5" />
         {u.phone || 'No registrado'}

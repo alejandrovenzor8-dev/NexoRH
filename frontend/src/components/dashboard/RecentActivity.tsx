@@ -1,21 +1,15 @@
 import { Activity } from 'lucide-react'
 import SectionHeader from '@/components/ui/SectionHeader'
 import EmptyState from '@/components/ui/EmptyState'
-
-interface ActivityItem {
-  id: string
-  message: string
-  time: string
-  type: 'user' | 'system' | 'auth'
-}
+import { DashboardActivityItem, DashboardActivityType } from '@/types/dashboard'
 
 // Placeholder — en el futuro conectar con API de actividad
-const MOCK_ACTIVITY: ActivityItem[] = []
+const MOCK_ACTIVITY: DashboardActivityItem[] = []
 
-const TYPE_COLORS: Record<string, string> = {
-  user: 'bg-blue-400',
-  system: 'bg-purple-400',
-  auth: 'bg-emerald-400',
+const TYPE_COLORS: Record<DashboardActivityType, string> = {
+  [DashboardActivityType.USER]: 'bg-blue-400',
+  [DashboardActivityType.SYSTEM]: 'bg-purple-400',
+  [DashboardActivityType.AUTH]: 'bg-emerald-400',
 }
 
 export default function RecentActivity() {

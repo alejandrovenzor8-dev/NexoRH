@@ -24,9 +24,11 @@ import Select from '@/components/ui/Select'
 import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import StatCard from '@/components/ui/StatCard'
-import { getCurrentUser, getUsers, User } from '@/services/api'
+import { getCurrentUser, getUsers } from '@/services/api'
 import { mapUsersToEmployees } from '@/components/employees/employee-data'
 import { EmployeeRecord } from '@/components/employees/types'
+import { EmployeeRole } from '@/types/employee'
+import { UserSession } from '@/types/auth'
 import {
   dayDiff,
   generatePermissionRequests,
@@ -54,13 +56,13 @@ interface NewRequestForm {
   endDate: string
 }
 
-type AppRole = 'ADMIN' | 'MANAGER' | 'USER'
+type AppRole = EmployeeRole.ADMIN | EmployeeRole.MANAGER | EmployeeRole.USER
 
 const STATUS_BADGE: Record<PermissionStatus, React.ReactNode> = {
-  pending: <Badge variant="warning">Pendiente</Badge>,
-  approved: <Badge variant="success">Aprobada</Badge>,
-  rejected: <Badge variant="danger">Rechazada</Badge>,
-  cancelled: <Badge variant="muted">Cancelada</Badge>,
+  [PermissionStatus.PENDING]: <Badge variant="warning">Pendiente</Badge>,
+  [PermissionStatus.APPROVED]: <Badge variant="success">Aprobada</Badge>,
+  [PermissionStatus.REJECTED]: <Badge variant="danger">Rechazada</Badge>,
+  [PermissionStatus.CANCELLED]: <Badge variant="muted">Cancelada</Badge>,
 }
 
 const PAGE_SIZE = 8
@@ -91,7 +93,7 @@ function PermissionsSkeleton() {
 
 export default function PermissionsPage() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserSession | null>(null)
   const [employees, setEmployees] = useState<EmployeeRecord[]>([])
   const [requests, setRequests] = useState<PermissionRequest[]>([])
   const [loading, setLoading] = useState(true)
@@ -103,7 +105,7 @@ export default function PermissionsPage() {
   const [newRequestSaving, setNewRequestSaving] = useState(false)
   const [newRequestForm, setNewRequestForm] = useState<NewRequestForm>({
     employeeId: '',
-    type: 'Vacaciones',
+    type: PermissionType.VACATION,
     startDate: isoDateOffset(1),
     endDate: isoDateOffset(2),
   })
@@ -158,15 +160,15 @@ export default function PermissionsPage() {
     [employees],
   )
 
-  const currentRole: AppRole = user?.role === 'ADMIN' || user?.role === 'MANAGER' ? user.role : 'USER'
+  const currentRole: AppRole = user?.role === EmployeeRole.ADMIN || user?.role === EmployeeRole.MANAGER ? user.role : EmployeeRole.USER
   const currentEmployee = useMemo(() => employees.find((e) => e.id === user?.id), [employees, user?.id])
-  const canApproveReject = currentRole === 'ADMIN' || currentRole === 'MANAGER'
-  const canCreateRequest = currentRole === 'USER'
+  const canApproveReject = currentRole === EmployeeRole.ADMIN || currentRole === EmployeeRole.MANAGER
+  const canCreateRequest = currentRole === EmployeeRole.USER
 
   const scopedRequests = useMemo(() => {
     if (!user) return []
-    if (currentRole === 'ADMIN') return requests
-    if (currentRole === 'MANAGER') {
+    if (currentRole === EmployeeRole.ADMIN) return requests
+    if (currentRole === EmployeeRole.MANAGER) {
       if (!currentEmployee) return []
       return requests.filter((r) => r.department === currentEmployee.department)
     }
@@ -208,10 +210,10 @@ export default function PermissionsPage() {
   const paged = filtered.slice(startIndex, startIndex + PAGE_SIZE)
 
   const stats = useMemo(() => ({
-    pending: scopedRequests.filter((r) => r.status === 'pending').length,
-    approved: scopedRequests.filter((r) => r.status === 'approved').length,
-    rejected: scopedRequests.filter((r) => r.status === 'rejected').length,
-    activeAbsences: scopedRequests.filter((r) => r.status === 'approved' && new Date(r.endDate) >= new Date()).length,
+    pending: scopedRequests.filter((r) => r.status === PermissionStatus.PENDING).length,
+    approved: scopedRequests.filter((r) => r.status === PermissionStatus.APPROVED).length,
+    rejected: scopedRequests.filter((r) => r.status === PermissionStatus.REJECTED).length,
+    activeAbsences: scopedRequests.filter((r) => r.status === PermissionStatus.APPROVED && new Date(r.endDate) >= new Date()).length,
   }), [scopedRequests])
 
   const applyAction = () => {
@@ -223,16 +225,16 @@ export default function PermissionsPage() {
       return
     }
 
-    if (pendingAction.action === 'cancel' && currentRole !== 'USER') {
+    if (pendingAction.action === 'cancel' && currentRole !== EmployeeRole.USER) {
       setToast({ tone: 'error', message: 'Solo los usuarios pueden cancelar sus solicitudes desde este modulo.' })
       setPendingAction(null)
       return
     }
 
     const nextStatus: Record<typeof pendingAction.action, PermissionStatus> = {
-      approve: 'approved',
-      reject: 'rejected',
-      cancel: 'cancelled',
+      approve: PermissionStatus.APPROVED,
+      reject: PermissionStatus.REJECTED,
+      cancel: PermissionStatus.CANCELLED,
     }
 
     setRequests((prev) => prev.map((item) => (
@@ -263,7 +265,7 @@ export default function PermissionsPage() {
       return
     }
 
-    if (currentRole === 'USER' && user && employee.id !== user.id) {
+    if (currentRole === EmployeeRole.USER && user && employee.id !== user.id) {
       setToast({ tone: 'error', message: 'Solo puedes crear solicitudes para tu propio perfil.' })
       return
     }
@@ -276,7 +278,7 @@ export default function PermissionsPage() {
     setNewRequestSaving(true)
 
     window.setTimeout(() => {
-      const managers = employees.filter((e) => e.role === 'ADMIN' || e.role === 'MANAGER')
+      const managers = employees.filter((e) => e.role === EmployeeRole.ADMIN || e.role === EmployeeRole.MANAGER)
       const manager = managers[0]?.fullName ?? 'Sin asignar'
       const newItem: PermissionRequest = {
         id: `req-new-${Date.now()}`,
@@ -288,7 +290,7 @@ export default function PermissionsPage() {
         startDate: newRequestForm.startDate,
         endDate: newRequestForm.endDate,
         duration: dayDiff(newRequestForm.startDate, newRequestForm.endDate),
-        status: 'pending',
+        status: PermissionStatus.PENDING,
         manager,
         updatedAt: new Date().toISOString().slice(0, 10),
         reason: 'Solicitud registrada por el colaborador desde el modulo de permisos.',
@@ -375,7 +377,7 @@ export default function PermissionsPage() {
                         setOpenMenuId(null)
                         setPendingAction({ id: row.id, action: 'approve' })
                       }}
-                      disabled={row.status === 'approved' || row.status === 'cancelled'}
+                      disabled={row.status === PermissionStatus.APPROVED || row.status === PermissionStatus.CANCELLED}
                     >
                       <CheckCircle2 className="w-4 h-4" />
                       Aprobar
@@ -386,21 +388,21 @@ export default function PermissionsPage() {
                         setOpenMenuId(null)
                         setPendingAction({ id: row.id, action: 'reject' })
                       }}
-                      disabled={row.status === 'rejected' || row.status === 'cancelled'}
+                      disabled={row.status === PermissionStatus.REJECTED || row.status === PermissionStatus.CANCELLED}
                     >
                       <XCircle className="w-4 h-4" />
                       Rechazar
                     </button>
                   </>
                 )}
-                {currentRole === 'USER' && (
+                {currentRole === EmployeeRole.USER && (
                   <button
                     className="w-full px-3 py-2 text-sm text-left text-gray-600 hover:bg-gray-50 flex items-center gap-2 disabled:text-gray-400 disabled:hover:bg-transparent"
                     onClick={() => {
                       setOpenMenuId(null)
                       setPendingAction({ id: row.id, action: 'cancel' })
                     }}
-                    disabled={row.status === 'cancelled'}
+                    disabled={row.status === PermissionStatus.CANCELLED}
                   >
                     <ShieldAlert className="w-4 h-4" />
                     Cancelar
@@ -433,9 +435,9 @@ export default function PermissionsPage() {
         <SectionHeader
           title="Permisos y Ausencias"
           description={
-            currentRole === 'ADMIN'
+            currentRole === EmployeeRole.ADMIN
               ? 'Vista global de solicitudes y ausencias de toda la organizacion'
-              : currentRole === 'MANAGER'
+              : currentRole === EmployeeRole.MANAGER
               ? 'Gestiona las solicitudes del equipo a tu cargo'
               : 'Consulta y gestiona tus solicitudes personales'
           }
@@ -449,15 +451,15 @@ export default function PermissionsPage() {
         />
 
         <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
-          <StatCard title="Pendientes" value={stats.pending} subtitle={currentRole === 'ADMIN' ? 'Esperando revision global' : currentRole === 'MANAGER' ? 'Pendientes de tu equipo' : 'Tus solicitudes pendientes'} icon={Clock3} iconColor="text-amber-600" />
-          <StatCard title="Aprobadas" value={stats.approved} subtitle={currentRole === 'ADMIN' ? 'Solicitudes confirmadas' : currentRole === 'MANAGER' ? 'Aprobadas en tu equipo' : 'Tus solicitudes aprobadas'} icon={CheckCircle2} iconColor="text-emerald-600" />
-          <StatCard title="Rechazadas" value={stats.rejected} subtitle={currentRole === 'ADMIN' ? 'Requieren seguimiento' : currentRole === 'MANAGER' ? 'Rechazadas de tu equipo' : 'Tus solicitudes rechazadas'} icon={XCircle} iconColor="text-rose-600" />
-          <StatCard title="Ausencias activas" value={stats.activeAbsences} subtitle={currentRole === 'USER' ? 'Tus ausencias activas' : 'Hoy en curso'} icon={CalendarClock} iconColor="text-blue-600" />
+          <StatCard title="Pendientes" value={stats.pending} subtitle={currentRole === EmployeeRole.ADMIN ? 'Esperando revision global' : currentRole === EmployeeRole.MANAGER ? 'Pendientes de tu equipo' : 'Tus solicitudes pendientes'} icon={Clock3} iconColor="text-amber-600" />
+          <StatCard title="Aprobadas" value={stats.approved} subtitle={currentRole === EmployeeRole.ADMIN ? 'Solicitudes confirmadas' : currentRole === EmployeeRole.MANAGER ? 'Aprobadas en tu equipo' : 'Tus solicitudes aprobadas'} icon={CheckCircle2} iconColor="text-emerald-600" />
+          <StatCard title="Rechazadas" value={stats.rejected} subtitle={currentRole === EmployeeRole.ADMIN ? 'Requieren seguimiento' : currentRole === EmployeeRole.MANAGER ? 'Rechazadas de tu equipo' : 'Tus solicitudes rechazadas'} icon={XCircle} iconColor="text-rose-600" />
+          <StatCard title="Ausencias activas" value={stats.activeAbsences} subtitle={currentRole === EmployeeRole.USER ? 'Tus ausencias activas' : 'Hoy en curso'} icon={CalendarClock} iconColor="text-blue-600" />
         </div>
       </section>
 
       <section className="bg-white rounded-2xl border border-gray-200/80 p-5 sm:p-6 shadow-sm transition-all duration-300 hover:shadow-md">
-        <div className={`grid grid-cols-1 md:grid-cols-2 ${currentRole === 'USER' ? 'xl:grid-cols-5' : 'xl:grid-cols-6'} gap-3 mb-5`}>
+        <div className={`grid grid-cols-1 md:grid-cols-2 ${currentRole === EmployeeRole.USER ? 'xl:grid-cols-5' : 'xl:grid-cols-6'} gap-3 mb-5`}>
           <div className="xl:col-span-2">
             <Input
               value={filters.query}
@@ -470,10 +472,10 @@ export default function PermissionsPage() {
             onChange={(e) => setFilters((prev) => ({ ...prev, status: e.target.value as PermissionFilters['status'] }))}
             options={[
               { label: 'Estado', value: 'all' },
-              { label: 'Pendiente', value: 'pending' },
-              { label: 'Aprobada', value: 'approved' },
-              { label: 'Rechazada', value: 'rejected' },
-              { label: 'Cancelada', value: 'cancelled' },
+              { label: 'Pendiente', value: PermissionStatus.PENDING },
+              { label: 'Aprobada', value: PermissionStatus.APPROVED },
+              { label: 'Rechazada', value: PermissionStatus.REJECTED },
+              { label: 'Cancelada', value: PermissionStatus.CANCELLED },
             ]}
           />
           <Select
@@ -491,7 +493,7 @@ export default function PermissionsPage() {
               { label: 'Departamento', value: 'all' },
               ...departmentOptions.map((d) => ({ label: d, value: d })),
             ]}
-            className={currentRole === 'USER' ? 'hidden' : ''}
+            className={currentRole === EmployeeRole.USER ? 'hidden' : ''}
           />
           <Input
             type="date"
@@ -525,16 +527,16 @@ export default function PermissionsPage() {
             <EmptyState
               icon={CalendarCheck}
               title={
-                currentRole === 'USER'
+                currentRole === EmployeeRole.USER
                   ? 'No tienes solicitudes registradas'
-                  : currentRole === 'MANAGER'
+                  : currentRole === EmployeeRole.MANAGER
                   ? 'No hay solicitudes del equipo'
                   : 'No hay solicitudes registradas'
               }
               description={
-                currentRole === 'USER'
+                currentRole === EmployeeRole.USER
                   ? 'Crea tu primera solicitud o ajusta filtros para encontrar registros previos.'
-                  : currentRole === 'MANAGER'
+                  : currentRole === EmployeeRole.MANAGER
                   ? 'Cuando tu equipo genere solicitudes, apareceran en esta vista.'
                   : 'Crea una nueva solicitud o ajusta los filtros para ver resultados.'
               }
@@ -603,11 +605,11 @@ export default function PermissionsPage() {
             label="Empleado"
             value={newRequestForm.employeeId}
             onChange={(e) => setNewRequestForm((prev) => ({ ...prev, employeeId: e.target.value }))}
-            options={(currentRole === 'USER' && user
+            options={(currentRole === EmployeeRole.USER && user
               ? employees.filter((e) => e.id === user.id)
               : employees
             ).map((e) => ({ label: `${e.fullName} - ${e.department}`, value: e.id }))}
-            disabled={currentRole === 'USER'}
+            disabled={currentRole === EmployeeRole.USER}
           />
           <Select
             label="Tipo"

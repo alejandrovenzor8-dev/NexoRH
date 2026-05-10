@@ -14,6 +14,8 @@ import {
   LogOut,
 } from 'lucide-react'
 import { logout } from '@/services/api'
+import { EmployeeRole } from '@/types/employee'
+import { UserSession } from '@/types/auth'
 
 interface NavItem {
   label: string
@@ -23,7 +25,7 @@ interface NavItem {
 }
 
 function getNavItemsByRole(role?: string): NavItem[] {
-  if (role === 'ADMIN') {
+  if (role === EmployeeRole.ADMIN) {
     return [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Empleados', href: '/employees', icon: Users },
@@ -36,7 +38,7 @@ function getNavItemsByRole(role?: string): NavItem[] {
     ]
   }
 
-  if (role === 'MANAGER') {
+  if (role === EmployeeRole.MANAGER) {
     return [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Empleados', href: '/employees', icon: Users },
@@ -54,7 +56,7 @@ function getNavItemsByRole(role?: string): NavItem[] {
 }
 
 interface SidebarProps {
-  user: { fullName: string; email: string; role: string } | null
+  user: UserSession | null
   collapsed: boolean
   onCollapse: (v: boolean) => void
   mobileOpen: boolean

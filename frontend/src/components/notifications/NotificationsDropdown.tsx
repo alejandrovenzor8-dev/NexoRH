@@ -17,27 +17,28 @@ import {
   getSeedNotifications,
   InAppNotification,
   NOTIFICATION_TYPE_META,
-  NotificationType,
 } from './notifications-data'
+import { NotificationType } from '@/types/notification'
+import { EmployeeRole } from '@/types/employee'
 
 interface NotificationsDropdownProps {
-  role?: string
+  role?: EmployeeRole
 }
 
 const GROUP_ORDER: NotificationType[] = [
-  'new_request',
-  'request_approved',
-  'request_rejected',
-  'new_message',
-  'recruitment',
+  NotificationType.NEW_REQUEST,
+  NotificationType.REQUEST_APPROVED,
+  NotificationType.REQUEST_REJECTED,
+  NotificationType.NEW_MESSAGE,
+  NotificationType.RECRUITMENT,
 ]
 
 const TYPE_ICONS: Record<NotificationType, React.ElementType> = {
-  new_request: FilePlus2,
-  request_approved: CheckCircle2,
-  request_rejected: XCircle,
-  new_message: MessageSquare,
-  recruitment: BriefcaseBusiness,
+  [NotificationType.NEW_REQUEST]: FilePlus2,
+  [NotificationType.REQUEST_APPROVED]: CheckCircle2,
+  [NotificationType.REQUEST_REJECTED]: XCircle,
+  [NotificationType.NEW_MESSAGE]: MessageSquare,
+  [NotificationType.RECRUITMENT]: BriefcaseBusiness,
 }
 
 export default function NotificationsDropdown({ role }: NotificationsDropdownProps) {

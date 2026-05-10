@@ -1,9 +1,10 @@
 import { Users, UserCheck, LayoutGrid } from 'lucide-react'
 import StatCard from '@/components/ui/StatCard'
-import { User } from '@/services/api'
+import { UserSession } from '@/types/auth'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 interface DashboardStatsProps {
-  users: User[]
+  users: UserSession[]
   loading?: boolean
 }
 
@@ -21,8 +22,8 @@ function SkeletonStat() {
 }
 
 export default function DashboardStats({ users, loading }: DashboardStatsProps) {
-  const activeUsers = users.filter((u) => u.status === 'active').length
-  const admins = users.filter((u) => u.role === 'ADMIN').length
+  const activeUsers = users.filter((u) => u.status === EmployeeStatus.ACTIVE).length
+  const admins = users.filter((u) => u.role === EmployeeRole.ADMIN).length
 
   if (loading) {
     return (

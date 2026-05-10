@@ -17,6 +17,7 @@ import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
 import EmptyState from '@/components/ui/EmptyState'
 import { EmployeeRecord } from './types'
+import { EmployeeStatus } from '@/types/employee'
 
 interface EmployeeProfileProps {
   employee: EmployeeRecord
@@ -42,7 +43,7 @@ function formatDate(date: string) {
 export default function EmployeeProfile({ employee, onEdit }: EmployeeProfileProps) {
   const [confirmDeactivateOpen, setConfirmDeactivateOpen] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
-  const [isInactive, setIsInactive] = useState(employee.status === 'inactive')
+  const [isInactive, setIsInactive] = useState(employee.status === EmployeeStatus.INACTIVE)
 
   const activity: ActivityItem[] = useMemo(
     () => [
@@ -89,7 +90,11 @@ export default function EmployeeProfile({ employee, onEdit }: EmployeeProfilePro
     { id: 'h3', title: 'Revision de permisos', date: '11 marzo 2026' },
   ]
 
-  const showStatus = employee.status === 'baja' ? 'baja' : isInactive ? 'inactive' : 'active'
+  const showStatus = employee.status === EmployeeStatus.TERMINATED
+    ? EmployeeStatus.TERMINATED
+    : isInactive
+    ? EmployeeStatus.INACTIVE
+    : EmployeeStatus.ACTIVE
 
   const triggerToast = (message: string) => {
     setToast(message)
@@ -120,7 +125,7 @@ export default function EmployeeProfile({ employee, onEdit }: EmployeeProfilePro
               <p className="text-sm text-gray-500 truncate mt-1">{employee.email}</p>
               <div className="flex flex-wrap items-center gap-2 mt-3">
                 <StatusBadge value={employee.role} variant="role" />
-                {showStatus === 'baja' ? <Badge variant="danger">Baja</Badge> : <StatusBadge value={showStatus} variant="status" />}
+                {showStatus === EmployeeStatus.TERMINATED ? <Badge variant="danger">Baja</Badge> : <StatusBadge value={showStatus} variant="status" />}
                 <Badge variant="muted">{employee.department}</Badge>
               </div>
             </div>
@@ -131,7 +136,7 @@ export default function EmployeeProfile({ employee, onEdit }: EmployeeProfilePro
                 variant="warning"
                 leftIcon={<UserMinus className="w-4 h-4" />}
                 onClick={() => setConfirmDeactivateOpen(true)}
-                disabled={showStatus === 'inactive' || showStatus === 'baja'}
+                disabled={showStatus === EmployeeStatus.INACTIVE || showStatus === EmployeeStatus.TERMINATED}
               >
                 Desactivar
               </Button>

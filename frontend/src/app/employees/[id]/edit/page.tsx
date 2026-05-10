@@ -8,13 +8,14 @@ import Button from '@/components/ui/Button'
 import EmployeeForm, { EmployeeFormValues } from '@/components/employees/EmployeeForm'
 import EmployeeSkeleton from '@/components/employees/EmployeeSkeleton'
 import EmployeeEmptyState from '@/components/employees/EmployeeEmptyState'
-import { getCurrentUser, getUsers, User } from '@/services/api'
+import { getCurrentUser, getUsers } from '@/services/api'
+import { UserSession } from '@/types/auth'
 import { mapUsersToEmployees } from '@/components/employees/employee-data'
 
 export default function EmployeeEditPage() {
   const params = useParams<{ id: string }>()
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
+  const [user, setUser] = useState<UserSession | null>(null)
   const [employees, setEmployees] = useState<ReturnType<typeof mapUsersToEmployees>>([])
   const [loading, setLoading] = useState(true)
   const [saved, setSaved] = useState(false)

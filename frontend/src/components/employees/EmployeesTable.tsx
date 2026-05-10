@@ -7,6 +7,7 @@ import StatusBadge from '@/components/ui/StatusBadge'
 import Button from '@/components/ui/Button'
 import Badge from '@/components/ui/Badge'
 import { EmployeeRecord, EmployeeStatus } from './types'
+import { EmployeeStatus as EmployeeStatusEnum } from '@/types/employee'
 
 const PAGE_SIZE = 8
 
@@ -65,7 +66,7 @@ export default function EmployeesTable({ employees, onView, onEdit, onRequestTog
       key: 'status',
       label: 'Estado',
       render: (row: EmployeeRecord) => {
-        if (row.status === 'baja') return <Badge variant="danger">Baja</Badge>
+        if (row.status === EmployeeStatusEnum.TERMINATED) return <Badge variant="danger">Baja</Badge>
         return <StatusBadge value={row.status} variant="status" />
       },
     },
@@ -85,7 +86,7 @@ export default function EmployeesTable({ employees, onView, onEdit, onRequestTog
       className: 'text-right w-[90px]',
       render: (row: EmployeeRecord) => {
         const isOpen = openMenuId === row.id
-        const canActivate = row.status === 'inactive'
+        const canActivate = row.status === EmployeeStatusEnum.INACTIVE
 
         return (
           <div className="relative inline-flex justify-end w-full">
@@ -124,7 +125,7 @@ export default function EmployeesTable({ employees, onView, onEdit, onRequestTog
                     className="w-full px-3 py-2 text-sm text-left text-emerald-700 hover:bg-emerald-50 flex items-center gap-2"
                     onClick={() => {
                       setOpenMenuId(null)
-                      onRequestToggle(row.id, 'active')
+                      onRequestToggle(row.id, EmployeeStatusEnum.ACTIVE)
                     }}
                   >
                     <UserCheck className="w-4 h-4" />
@@ -135,9 +136,9 @@ export default function EmployeesTable({ employees, onView, onEdit, onRequestTog
                     className="w-full px-3 py-2 text-sm text-left text-danger-600 hover:bg-danger-50 flex items-center gap-2"
                     onClick={() => {
                       setOpenMenuId(null)
-                      onRequestToggle(row.id, 'inactive')
+                      onRequestToggle(row.id, EmployeeStatusEnum.INACTIVE)
                     }}
-                    disabled={row.status === 'baja'}
+                    disabled={row.status === EmployeeStatusEnum.TERMINATED}
                   >
                     <UserX className="w-4 h-4" />
                     Desactivar

@@ -1,17 +1,18 @@
-import { User } from '@/services/api'
-import { EmployeeRecord, EmployeeRole, EmployeeStatus } from './types'
+import { UserSession } from '@/types/auth'
+import { EmployeeRecord } from './types'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 const DEPARTMENTS = ['Operaciones', 'Producto', 'People', 'Finanzas', 'Comercial', 'Tecnologia']
 
 function normalizeRole(role: string): EmployeeRole {
-  if (role === 'ADMIN' || role === 'MANAGER' || role === 'USER') return role
-  return 'USER'
+  if (role === EmployeeRole.ADMIN || role === EmployeeRole.MANAGER || role === EmployeeRole.USER) return role
+  return EmployeeRole.USER
 }
 
 function normalizeStatus(status?: string): EmployeeStatus {
-  if (status === 'inactive') return 'inactive'
-  if (status === 'baja') return 'baja'
-  return 'active'
+  if (status === EmployeeStatus.INACTIVE) return EmployeeStatus.INACTIVE
+  if (status === EmployeeStatus.TERMINATED || status === 'terminated') return EmployeeStatus.TERMINATED
+  return EmployeeStatus.ACTIVE
 }
 
 function pickDepartment(seed: string): string {
@@ -20,7 +21,7 @@ function pickDepartment(seed: string): string {
   return DEPARTMENTS[acc % DEPARTMENTS.length]
 }
 
-export function mapUsersToEmployees(users: User[]): EmployeeRecord[] {
+export function mapUsersToEmployees(users: UserSession[]): EmployeeRecord[] {
   return users.map((user) => ({
     id: user.id,
     fullName: user.fullName,

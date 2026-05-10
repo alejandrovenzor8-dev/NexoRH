@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getCurrentUser, getUsers, User } from '@/services/api'
+import { getCurrentUser, getUsers } from '@/services/api'
+import { UserSession } from '@/types/auth'
 import AppLayout from '@/components/layout/AppLayout'
 import WelcomeBanner from '@/components/dashboard/WelcomeBanner'
 import StatsGrid from '@/components/dashboard/StatsGrid'
@@ -14,8 +15,8 @@ import DashboardEmptyState from '@/components/dashboard/DashboardEmptyState'
 
 export default function DashboardPage() {
   const router = useRouter()
-  const [user, setUser] = useState<User | null>(null)
-  const [users, setUsers] = useState<User[]>([])
+  const [user, setUser] = useState<UserSession | null>(null)
+  const [users, setUsers] = useState<UserSession[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {

@@ -1,16 +1,17 @@
 import { ShieldCheck, UserCheck, UserMinus, Users } from 'lucide-react'
 import StatCard from '@/components/ui/StatCard'
 import { EmployeeRecord } from './types'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
 
 interface EmployeeStatsProps {
   employees: EmployeeRecord[]
 }
 
 export default function EmployeeStats({ employees }: EmployeeStatsProps) {
-  const active = employees.filter((e) => e.status === 'active').length
-  const managers = employees.filter((e) => e.role === 'MANAGER').length
-  const users = employees.filter((e) => e.role === 'USER').length
-  const inactive = employees.filter((e) => e.status === 'inactive' || e.status === 'baja').length
+  const active = employees.filter((e) => e.status === EmployeeStatus.ACTIVE).length
+  const managers = employees.filter((e) => e.role === EmployeeRole.MANAGER).length
+  const users = employees.filter((e) => e.role === EmployeeRole.USER).length
+  const inactive = employees.filter((e) => e.status === EmployeeStatus.INACTIVE || e.status === EmployeeStatus.TERMINATED).length
 
   return (
     <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

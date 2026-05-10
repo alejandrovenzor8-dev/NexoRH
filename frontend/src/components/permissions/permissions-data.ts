@@ -1,46 +1,22 @@
-import { EmployeeRecord } from '@/components/employees/types'
+import { EmployeeRecord } from '@/types/employee'
+import {
+  PermissionRequest,
+  PermissionStatus,
+  PermissionType,
+} from '@/types/permission'
+import { EmployeeRole } from '@/types/employee'
 
-export type PermissionStatus = 'pending' | 'approved' | 'rejected' | 'cancelled'
-
-export type PermissionType =
-  | 'Vacaciones'
-  | 'Permiso personal'
-  | 'Incapacidad'
-  | 'Home office'
-
-export interface PermissionTimelineItem {
-  id: string
-  title: string
-  description: string
-  date: string
-  tone: 'blue' | 'green' | 'amber' | 'gray'
-}
-
-export interface PermissionRequest {
-  id: string
-  employeeId: string
-  employeeName: string
-  employeeEmail: string
-  department: string
-  type: PermissionType
-  startDate: string
-  endDate: string
-  duration: number
-  status: PermissionStatus
-  manager: string
-  updatedAt: string
-  reason: string
-  comments: string[]
-  attachments: { id: string; name: string; size: string }[]
-  approvalHistory: { id: string; actor: string; action: string; date: string }[]
-  timeline: PermissionTimelineItem[]
-}
+export {
+  PermissionStatus,
+  PermissionType,
+} from '@/types/permission'
+export type { PermissionRequest } from '@/types/permission'
 
 export const REQUEST_TYPES: PermissionType[] = [
-  'Vacaciones',
-  'Permiso personal',
-  'Incapacidad',
-  'Home office',
+  PermissionType.VACATION,
+  PermissionType.PERSONAL,
+  PermissionType.MEDICAL,
+  PermissionType.REMOTE,
 ]
 
 export function isoDateOffset(offsetDays: number) {
@@ -64,12 +40,17 @@ export function dayDiff(start: string, end: string) {
 }
 
 export function generatePermissionRequests(employees: EmployeeRecord[]): PermissionRequest[] {
-  const managers = employees.filter((e) => e.role === 'ADMIN' || e.role === 'MANAGER')
+  const managers = employees.filter((e) => e.role === EmployeeRole.ADMIN || e.role === EmployeeRole.MANAGER)
 
   return employees.slice(0, 16).map((employee, index) => {
     const start = isoDateOffset(-index * 3)
     const end = isoDateOffset(-index * 3 + (index % 4) + 1)
-    const statusCycle: PermissionStatus[] = ['pending', 'approved', 'rejected', 'cancelled']
+    const statusCycle: PermissionStatus[] = [
+      PermissionStatus.PENDING,
+      PermissionStatus.APPROVED,
+      PermissionStatus.REJECTED,
+      PermissionStatus.CANCELLED,
+    ]
     const type = REQUEST_TYPES[index % REQUEST_TYPES.length]
     const manager = managers[index % Math.max(1, managers.length)]
     const status = statusCycle[index % statusCycle.length]
@@ -88,11 +69,11 @@ export function generatePermissionRequests(employees: EmployeeRecord[]): Permiss
       manager: manager ? manager.fullName : 'Sin asignar',
       updatedAt: isoDateOffset(-index),
       reason:
-        type === 'Vacaciones'
+        type === PermissionType.VACATION
           ? 'Solicitud de descanso programado y coordinado con el equipo.'
-          : type === 'Permiso personal'
+          : type === PermissionType.PERSONAL
           ? 'Atencion de asuntos personales con cobertura de actividades acordada.'
-          : type === 'Incapacidad'
+          : type === PermissionType.MEDICAL
           ? 'Reposo medico temporal con justificante adjunto.'
           : 'Trabajo remoto temporal por coordinacion operativa.',
       comments: [
@@ -105,7 +86,7 @@ export function generatePermissionRequests(employees: EmployeeRecord[]): Permiss
       ],
       approvalHistory: [
         { id: `ah-${index}-1`, actor: employee.fullName, action: 'Solicitud creada', date: isoDateOffset(-index - 2) },
-        { id: `ah-${index}-2`, actor: manager ? manager.fullName : 'Sistema', action: status === 'pending' ? 'En revision' : status === 'approved' ? 'Aprobada' : status === 'rejected' ? 'Rechazada' : 'Cancelada', date: isoDateOffset(-index) },
+        { id: `ah-${index}-2`, actor: manager ? manager.fullName : 'Sistema', action: status === PermissionStatus.PENDING ? 'En revision' : status === PermissionStatus.APPROVED ? 'Aprobada' : status === PermissionStatus.REJECTED ? 'Rechazada' : 'Cancelada', date: isoDateOffset(-index) },
       ],
       timeline: [
         {
@@ -127,7 +108,7 @@ export function generatePermissionRequests(employees: EmployeeRecord[]): Permiss
           title: 'Estado actualizado',
           description: `La solicitud se marco como ${status}.`,
           date: isoDateOffset(-index),
-          tone: status === 'approved' ? 'green' : status === 'rejected' ? 'gray' : 'blue',
+          tone: status === PermissionStatus.APPROVED ? 'green' : status === PermissionStatus.REJECTED ? 'gray' : 'blue',
         },
         {
           id: `tl-${index}-4`,
