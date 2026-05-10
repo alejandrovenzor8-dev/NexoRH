@@ -21,6 +21,7 @@ interface EmployeeFormProps {
   initialValues?: Partial<EmployeeFormValues>
   submitLabel?: string
   onCancel?: () => void
+  onValuesChange?: (values: EmployeeFormValues) => void
   onSubmit: (values: EmployeeFormValues) => Promise<void> | void
 }
 
@@ -55,6 +56,7 @@ export default function EmployeeForm({
   initialValues,
   submitLabel = 'Guardar cambios',
   onCancel,
+  onValuesChange,
   onSubmit,
 }: EmployeeFormProps) {
   const [form, setForm] = useState<EmployeeFormValues>({
@@ -76,6 +78,10 @@ export default function EmployeeForm({
     const timeout = window.setTimeout(() => setToast(null), 2500)
     return () => window.clearTimeout(timeout)
   }, [toast])
+
+  useEffect(() => {
+    onValuesChange?.(form)
+  }, [form, onValuesChange])
 
   const setFieldValue = (name: keyof EmployeeFormValues, value: string) => {
     setForm((prev) => ({ ...prev, [name]: value }))

@@ -4,6 +4,28 @@ import { useState, useCallback, useMemo } from 'react'
 import type { Candidate, CandidateStage, RecruitmentStats, CandidateFilters } from '@/types/recruitment'
 import { CandidateStage as Stage } from '@/types/recruitment'
 
+const PIPELINE_STAGE_OVERRIDES_KEY = 'nexorh-recruitment-stage-overrides'
+
+function readStageOverrides(): Record<string, CandidateStage> {
+  if (typeof window === 'undefined') return {}
+
+  try {
+    const raw = window.localStorage.getItem(PIPELINE_STAGE_OVERRIDES_KEY)
+    if (!raw) return {}
+    return JSON.parse(raw) as Record<string, CandidateStage>
+  } catch {
+    return {}
+  }
+}
+
+function writeStageOverride(candidateId: string, stage: CandidateStage) {
+  if (typeof window === 'undefined') return
+
+  const current = readStageOverrides()
+  current[candidateId] = stage
+  window.localStorage.setItem(PIPELINE_STAGE_OVERRIDES_KEY, JSON.stringify(current))
+}
+
 /**
  * Hook para gestionar el estado del tablero Kanban de reclutamiento
  */
@@ -33,7 +55,7 @@ export function useRecruitment() {
 
       // Mock data para demostración
       setTimeout(() => {
-        setCandidates([
+        const mockCandidates: Candidate[] = [
           {
             id: '1',
             fullName: 'María García',
@@ -133,7 +155,21 @@ export function useRecruitment() {
             updatedAt: new Date().toISOString(),
             recruiter: 'Juan',
           },
-        ])
+        ]
+
+        const stageOverrides = readStageOverrides()
+        const mergedCandidates = mockCandidates.map((candidate) => {
+          const overrideStage = stageOverrides[candidate.id]
+          if (!overrideStage) return candidate
+
+          return {
+            ...candidate,
+            stage: overrideStage,
+            updatedAt: new Date().toISOString(),
+          }
+        })
+
+        setCandidates(mergedCandidates)
         setLoading(false)
       }, 500)
 
@@ -195,6 +231,8 @@ export function useRecruitment() {
    * Cambiar stage de candidato
    */
   const moveCandidate = useCallback((candidateId: string, newStage: CandidateStage) => {
+    writeStageOverride(candidateId, newStage)
+
     setCandidates((prev) =>
       prev.map((c) =>
         c.id === candidateId

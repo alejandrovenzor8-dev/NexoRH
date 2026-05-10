@@ -16,8 +16,14 @@ import {
   Star,
   UserRound,
   XCircle,
+  Loader2,
 } from 'lucide-react'
 import AppLayout from '@/components/layout/AppLayout'
+import Modal from '@/components/ui/Modal'
+import Button from '@/components/ui/Button'
+import EmployeeForm, { type EmployeeFormValues } from '@/components/employees/EmployeeForm'
+import { EmployeeRole, EmployeeStatus } from '@/types/employee'
+import { employeesService } from '@/services/employees.service'
 import type { UserSession } from '@/types/auth'
 import {
   CandidatePriority,
@@ -120,6 +126,43 @@ const timelineColorByType: Record<TimelineType, string> = {
   'stage-changed': 'bg-violet-100 text-violet-700 ring-violet-200',
   comment: 'bg-amber-100 text-amber-700 ring-amber-200',
   interview: 'bg-emerald-100 text-emerald-700 ring-emerald-200',
+}
+
+const PIPELINE_STAGE_OVERRIDES_KEY = 'nexorh-recruitment-stage-overrides'
+
+function inferDepartment(position: string): string {
+  const normalized = position.toLowerCase()
+  if (normalized.includes('design')) return 'Producto'
+  if (normalized.includes('product')) return 'Producto'
+  if (normalized.includes('backend')) return 'Tecnologia'
+  if (normalized.includes('frontend')) return 'Tecnologia'
+  if (normalized.includes('engineer')) return 'Tecnologia'
+  return 'Operaciones'
+}
+
+function toEmployeeInitialValues(candidate: Candidate): EmployeeFormValues {
+  return {
+    fullName: candidate.fullName,
+    email: candidate.email,
+    phone: candidate.phone ?? '',
+    role: EmployeeRole.USER,
+    status: EmployeeStatus.ACTIVE,
+    department: inferDepartment(candidate.position),
+    hiredAt: new Date().toISOString().slice(0, 10),
+  }
+}
+
+function persistPipelineStage(candidateId: string, stage: CandidateStage) {
+  if (typeof window === 'undefined') return
+
+  try {
+    const raw = window.localStorage.getItem(PIPELINE_STAGE_OVERRIDES_KEY)
+    const current = raw ? (JSON.parse(raw) as Record<string, CandidateStage>) : {}
+    current[candidateId] = stage
+    window.localStorage.setItem(PIPELINE_STAGE_OVERRIDES_KEY, JSON.stringify(current))
+  } catch {
+    // no-op in mock mode
+  }
 }
 
 function formatDate(value: string) {
@@ -354,6 +397,10 @@ export default function CandidateDetailPage() {
   const [showToast, setShowToast] = useState<string | null>(null)
   const [detail, setDetail] = useState<CandidateDetail | null>(null)
   const [currentStage, setCurrentStage] = useState<CandidateStage>(CandidateStage.APPLIED)
+  const [confirmConvertOpen, setConfirmConvertOpen] = useState(false)
+  const [employeeFormOpen, setEmployeeFormOpen] = useState(false)
+  const [employeeFormDraft, setEmployeeFormDraft] = useState<EmployeeFormValues | null>(null)
+  const [convertingEmployee, setConvertingEmployee] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -376,6 +423,7 @@ export default function CandidateDetailPage() {
     const candidateDetail = mockCandidateById(id)
     setDetail(candidateDetail)
     setCurrentStage(candidateDetail.candidate.stage)
+    setEmployeeFormDraft(toEmployeeInitialValues(candidateDetail.candidate))
     setLoading(false)
   }, [params?.id, router])
 
@@ -399,6 +447,7 @@ export default function CandidateDetailPage() {
   const candidate = detail.candidate
 
   const onChangeStage = (stage: CandidateStage) => {
+    persistPipelineStage(candidate.id, stage)
     setCurrentStage(stage)
     setDetail((prev) => {
       if (!prev) return prev
@@ -463,9 +512,74 @@ export default function CandidateDetailPage() {
     setShowToast('No hay CV disponible')
   }
 
-  const onHireCandidate = () => {
-    onChangeStage(CandidateStage.HIRED)
-    setShowToast('Candidato convertido en empleado')
+  const onOpenConvertFlow = () => {
+    setConfirmConvertOpen(true)
+  }
+
+  const onConfirmConversion = () => {
+    setConfirmConvertOpen(false)
+
+    // Smooth transition between modals
+    window.setTimeout(() => {
+      setEmployeeFormOpen(true)
+    }, 140)
+  }
+
+  const onCreateEmployee = async (values: EmployeeFormValues) => {
+    setConvertingEmployee(true)
+
+    try {
+      const createdEmployee = await employeesService.createEmployee(values)
+      const now = new Date().toISOString()
+
+      persistPipelineStage(candidate.id, CandidateStage.HIRED)
+      setCurrentStage(CandidateStage.HIRED)
+
+      setDetail((prev) => {
+        if (!prev) return prev
+
+        const stageEvent: TimelineItem = {
+          id: `tl-convert-stage-${Date.now()}`,
+          type: 'stage-changed',
+          title: 'Cambio de etapa',
+          detail: 'Movido a Contratado tras conversion a empleado.',
+          at: now,
+          author: 'Talent Acquisition',
+        }
+
+        const conversionEvent: TimelineItem = {
+          id: `tl-convert-comment-${Date.now()}`,
+          type: 'comment',
+          title: 'Candidato convertido en empleado',
+          detail: `Se creo el perfil de empleado ${createdEmployee.fullName} (${createdEmployee.id}).`,
+          at: now,
+          author: 'Sistema ATS',
+        }
+
+        return {
+          ...prev,
+          candidate: {
+            ...prev.candidate,
+            stage: CandidateStage.HIRED,
+            updatedAt: now,
+          },
+          timeline: [conversionEvent, stageEvent, ...prev.timeline],
+        }
+      })
+
+      setEmployeeFormDraft(values)
+      setEmployeeFormOpen(false)
+      setShowToast('Empleado creado y pipeline actualizado')
+    } catch (error) {
+      setShowToast(
+        error instanceof Error
+          ? `No se pudo crear el empleado: ${error.message}`
+          : 'No se pudo crear el empleado'
+      )
+      throw error
+    } finally {
+      setConvertingEmployee(false)
+    }
   }
 
   const onRejectCandidate = () => {
@@ -560,7 +674,7 @@ export default function CandidateDetailPage() {
                 Descargar CV
               </button>
               <button
-                onClick={onHireCandidate}
+                onClick={onOpenConvertFlow}
                 className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100"
               >
                 Convertir en empleado
@@ -769,6 +883,60 @@ export default function CandidateDetailPage() {
           </div>
         </section>
       </div>
+
+      <Modal
+        open={confirmConvertOpen}
+        onClose={() => setConfirmConvertOpen(false)}
+        title="Convertir candidato en empleado"
+        description="Se abrira el formulario de empleado con datos precargados para completar la alta."
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <Button variant="ghost" onClick={() => setConfirmConvertOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={onConfirmConversion}>
+              Continuar
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-3 text-sm text-slate-700">
+          <p>
+            Se conservaran los datos actuales del candidato y podras completar los campos faltantes antes de crear el empleado.
+          </p>
+          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2.5 text-emerald-700">
+            Al finalizar, el estado del pipeline se actualizara automaticamente a <strong>Contratado</strong>.
+          </div>
+        </div>
+      </Modal>
+
+      <Modal
+        open={employeeFormOpen}
+        onClose={() => setEmployeeFormOpen(false)}
+        title="Alta de empleado desde candidato"
+        description="Formulario precargado con informacion del candidato. Completa los datos requeridos para continuar."
+      >
+        <div className="space-y-4">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5 text-xs text-slate-600">
+            Datos mantenidos: nombre, correo, telefono y contexto de vacante. Puedes editarlos antes de crear el empleado.
+          </div>
+
+          {employeeFormDraft ? (
+            <EmployeeForm
+              initialValues={employeeFormDraft}
+              submitLabel={convertingEmployee ? 'Creando empleado...' : 'Crear empleado'}
+              onCancel={() => setEmployeeFormOpen(false)}
+              onValuesChange={(values) => setEmployeeFormDraft(values)}
+              onSubmit={onCreateEmployee}
+            />
+          ) : (
+            <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
+              <Loader2 className="h-4 w-4 animate-spin" />
+              Preparando formulario...
+            </div>
+          )}
+        </div>
+      </Modal>
 
       {showToast && (
         <div className="fixed bottom-6 right-6 z-50 rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-lg">
