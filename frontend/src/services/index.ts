@@ -10,3 +10,5 @@ export { EmployeesService, employeesService } from './employees.service'
 export { PermissionsService, permissionsService } from './permissions.service'
 
 export { NotificationsService, notificationsService } from './notifications.service'
+
+export { RecruitmentService, recruitmentService } from './recruitment.service'

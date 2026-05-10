@@ -30,7 +30,7 @@ function getNavItemsByRole(role?: string): NavItem[] {
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
       { label: 'Empleados', href: '/employees', icon: Users },
       { label: 'Permisos', href: '/permissions', icon: CalendarCheck },
-      { label: 'Reclutamiento', href: '/reclutamiento', icon: UserSearch, disabled: true },
+      { label: 'Reclutamiento', href: '/recruitment', icon: UserSearch },
       { label: 'Mensajes', href: '/mensajes', icon: MessageSquare, disabled: true },
       { label: 'Tableros', href: '/tableros', icon: Table2, disabled: true },
       { label: 'Archivos', href: '/archivos', icon: FolderOpen, disabled: true },
