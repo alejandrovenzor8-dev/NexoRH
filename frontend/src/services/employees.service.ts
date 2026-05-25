@@ -21,18 +21,9 @@ import { mapUsersToEmployees } from '@/components/employees/employee-data'
 export class EmployeesService extends BaseService {
   /**
    * Obtener todos los empleados
-   * 
-   * @returns Array de empleados
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * GET /api/employees
+   * GET /api/users
    */
   async getEmployees(): Promise<EmployeeRecord[]> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // const employees = await this.get<Employee[]>('/api/employees')
-    // return mapUsersToEmployees(employees)
-
-    // Por ahora, usar seed data del lado del cliente
     const users = await this.getUsers()
     return mapUsersToEmployees(users)
   }
@@ -51,144 +42,70 @@ export class EmployeesService extends BaseService {
 
   /**
    * Obtener empleado por ID
-   * 
-   * @param id - ID del empleado
-   * @returns Empleado
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * GET /api/employees/:id
+   * GET /api/users/:id
    */
   async getEmployeeById(id: string): Promise<EmployeeRecord | null> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // try {
-    //   const employee = await this.get<Employee>(`/api/employees/${id}`)
-    //   return mapUsersToEmployees([employee])[0] || null
-    // } catch {
-    //   return null
-    // }
-
-    const employees = await this.getEmployees()
-    return employees.find((e) => e.id === id) || null
+    try {
+      const employee = await this.get<Employee>(`/users/${id}`)
+      return mapUsersToEmployees([employee])[0] || null
+    } catch {
+      return null
+    }
   }
 
   /**
    * Crear nuevo empleado
-   * 
-   * @param data - Datos del nuevo empleado
-   * @returns Empleado creado
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * POST /api/employees
+   * POST /api/users
    */
   async createEmployee(data: CreateEmployeeDto): Promise<EmployeeRecord> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // const employee = await this.post<Employee>('/api/employees', data)
-    // return mapUsersToEmployees([employee])[0]
-
-    // Mock: Crear empleado localmente
-    const newEmployee: EmployeeRecord = {
-      id: `emp-${Date.now()}`,
+    // Mapear CreateEmployeeDto al formato del backend
+    const payload = {
       fullName: data.fullName,
       email: data.email,
+      password: 'changeme123', // Password temporal que el usuario debe cambiar
+      phone: data.phone,
+      department: data.department,
       role: data.role,
       status: data.status,
-      department: data.department,
-      phone: data.phone,
-      createdAt: new Date().toISOString(),
-      companyId: '',
     }
-    return newEmployee
+    
+    const employee = await this.post<Employee>('/users', payload)
+    return mapUsersToEmployees([employee])[0]
   }
 
   /**
    * Actualizar empleado
-   * 
-   * @param id - ID del empleado
-   * @param data - Datos a actualizar
-   * @returns Empleado actualizado
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * PATCH /api/employees/:id
+   * PATCH /api/users/:id
    */
   async updateEmployee(id: string, data: UpdateEmployeeDto): Promise<EmployeeRecord> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // const employee = await this.patch<Employee>(`/api/employees/${id}`, data)
-    // return mapUsersToEmployees([employee])[0]
-
-    // Mock: Obtener empleado y actualizar localmente
-    const employee = await this.getEmployeeById(id)
-    if (!employee) {
-      throw new Error(`Employee ${id} not found`)
-    }
-
-    return {
-      ...employee,
-      ...data,
-      id, // Asegurar que el ID no cambia
-    } as EmployeeRecord
+    const employee = await this.patch<Employee>(`/users/${id}`, data)
+    return mapUsersToEmployees([employee])[0]
   }
 
   /**
    * Cambiar estado de empleado
-   * 
-   * @param id - ID del empleado
-   * @param newStatus - Nuevo estado
-   * @returns Empleado con estado actualizado
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * PATCH /api/employees/:id/status
+   * PATCH /api/users/:id
    */
   async changeEmployeeStatus(
     id: string,
     newStatus: EmployeeRecord['status']
   ): Promise<EmployeeRecord> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // const employee = await this.patch<Employee>(`/api/employees/${id}/status`, { status: newStatus })
-    // return mapUsersToEmployees([employee])[0]
-
-    // Mock
-    const employee = await this.getEmployeeById(id)
-    if (!employee) {
-      throw new Error(`Employee ${id} not found`)
-    }
-
-    return {
-      ...employee,
-      status: newStatus,
-    }
+    return this.updateEmployee(id, { status: newStatus })
   }
 
   /**
    * Eliminar empleado (marcar como inactivo)
-   * 
-   * @param id - ID del empleado
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * DELETE /api/employees/:id
+   * PATCH /api/users/:id
    */
   async deleteEmployee(id: string): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.delete(`/api/employees/${id}`)
+    await this.updateEmployee(id, { status: 'baja' as any })
   }
 
   /**
    * Buscar empleados con filtros
    * (Implementado en el cliente en el hook useEmployees)
-   * 
-   * @param filters - Criterios de búsqueda
-   * @returns Empleados que coinciden
-   * 
-   * TODO: Implementar búsqueda server-side cuando API esté disponible
-   * GET /api/employees/search?query=...&role=...&status=...
    */
   async searchEmployees(filters: Partial<EmployeeFilters>): Promise<EmployeeRecord[]> {
-    // TODO: Reemplazar con búsqueda en API cuando esté disponible
-    // const queryParams = new URLSearchParams()
-    // if (filters.query) queryParams.append('query', filters.query)
-    // if (filters.role && filters.role !== 'all') queryParams.append('role', filters.role)
-    // if (filters.status && filters.status !== 'all') queryParams.append('status', filters.status)
-    // return this.get<EmployeeRecord[]>(`/api/employees/search?${queryParams}`)
-
     // Por ahora, obtener todos y filtrar en cliente
     return this.getEmployees()
   }
@@ -196,8 +113,11 @@ export class EmployeesService extends BaseService {
   /**
    * Obtener usuarios del sistema
    * Método privado usado internamente
+   * GET /api/users
    */
   private async getUsers(): Promise<UserSession[]> {
+    return this.get<UserSession[]>('/users')
+  }
     // TODO: Reemplazar con llamada real a API cuando esté disponible
     // return this.get<UserSession[]>('/api/users')
 

@@ -16,70 +16,63 @@ import type {
 export class RecruitmentService extends BaseService {
   /**
    * Obtener todos los candidatos
+   * GET /api/recruitment/candidates
    */
   async getCandidates(filters?: CandidateFilters): Promise<Candidate[]> {
-    // TODO: GET /api/candidates con filtros
-    // const query = new URLSearchParams()
-    // if (filters?.query) query.append('search', filters.query)
-    // if (filters?.stage !== 'all') query.append('stage', filters.stage)
-    // if (filters?.position !== 'all') query.append('position', filters.position)
-    // if (filters?.source !== 'all') query.append('source', filters.source)
-    // if (filters?.priority !== 'all') query.append('priority', filters.priority)
-    // query.append('sort', filters?.sort || 'newest')
-    // return this.get<Candidate[]>(`/candidates?${query}`)
-
-    return Promise.resolve([])
+    return this.get<Candidate[]>('/recruitment/candidates')
   }
 
   /**
    * Obtener candidato por ID
+   * GET /api/recruitment/candidates/:id
    */
   async getCandidate(id: string): Promise<Candidate> {
-    // TODO: GET /api/candidates/:id
-    return Promise.resolve({} as Candidate)
+    return this.get<Candidate>(`/recruitment/candidates/${id}`)
   }
 
   /**
    * Crear nuevo candidato
+   * POST /api/recruitment/candidates
    */
   async createCandidate(data: Partial<Candidate>): Promise<Candidate> {
-    // TODO: POST /api/candidates
-    return Promise.resolve({} as Candidate)
+    return this.post<Candidate>('/recruitment/candidates', data)
   }
 
   /**
    * Actualizar candidato
+   * PATCH /api/recruitment/candidates/:id
    */
   async updateCandidate(
     id: string,
     data: Partial<Candidate>
   ): Promise<Candidate> {
-    // TODO: PATCH /api/candidates/:id
-    return Promise.resolve({} as Candidate)
+    return this.patch<Candidate>(`/recruitment/candidates/${id}`, data)
   }
 
   /**
    * Cambiar stage de candidato
+   * PATCH /api/recruitment/candidates/:id
    */
   async changeCandidateStage(
     id: string,
     newStage: CandidateStage,
     notes?: string
   ): Promise<Candidate> {
-    // TODO: PATCH /api/candidates/:id/stage
-    // {
-    //   "stage": newStage,
-    //   "notes": notes
-    // }
-    return Promise.resolve({} as Candidate)
+    return this.patch<Candidate>(`/recruitment/candidates/${id}`, {
+      stage: newStage,
+      notes,
+    })
   }
 
   /**
    * Rechazar candidato
+   * PATCH /api/recruitment/candidates/:id
    */
   async rejectCandidate(id: string, reason?: string): Promise<Candidate> {
-    // TODO: POST /api/candidates/:id/reject
-    return Promise.resolve({} as Candidate)
+    return this.patch<Candidate>(`/recruitment/candidates/${id}`, {
+      stage: 'rejected',
+      notes: reason,
+    })
   }
 
   /**
@@ -89,7 +82,7 @@ export class RecruitmentService extends BaseService {
     id: string,
     employeeData: any
   ): Promise<{ candidate: Candidate; employee: any }> {
-    // TODO: POST /api/candidates/:id/hire
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve({ candidate: {} as Candidate, employee: {} })
   }
 
@@ -100,7 +93,7 @@ export class RecruitmentService extends BaseService {
     candidateId: string,
     interview: Partial<Interview>
   ): Promise<Interview> {
-    // TODO: POST /api/candidates/:id/interviews
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve({} as Interview)
   }
 
@@ -108,7 +101,7 @@ export class RecruitmentService extends BaseService {
    * Obtener entrevistas de candidato
    */
   async getCandidateInterviews(candidateId: string): Promise<Interview[]> {
-    // TODO: GET /api/candidates/:id/interviews
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve([])
   }
 
@@ -120,7 +113,7 @@ export class RecruitmentService extends BaseService {
     interviewId: string,
     data: Partial<Interview>
   ): Promise<Interview> {
-    // TODO: PATCH /api/candidates/:id/interviews/:interviewId
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve({} as Interview)
   }
 
@@ -128,7 +121,7 @@ export class RecruitmentService extends BaseService {
    * Obtener formularios de vacante
    */
   async getRecruitmentForms(): Promise<RecruitmentForm[]> {
-    // TODO: GET /api/recruitment-forms
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve([])
   }
 
@@ -136,7 +129,7 @@ export class RecruitmentService extends BaseService {
    * Crear formulario de vacante
    */
   async createRecruitmentForm(data: RecruitmentForm): Promise<RecruitmentForm> {
-    // TODO: POST /api/recruitment-forms
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve({} as RecruitmentForm)
   }
 
@@ -144,10 +137,12 @@ export class RecruitmentService extends BaseService {
    * Exportar candidatos
    */
   async exportCandidates(format: 'csv' | 'pdf' = 'csv'): Promise<Blob> {
-    // TODO: GET /api/candidates/export?format=csv
+    // TODO: Implementar endpoint en backend cuando sea necesario
     return Promise.resolve(new Blob())
   }
 }
 
-// Exportar singleton
+/**
+ * Instancia singleton del servicio de reclutamiento
+ */
 export const recruitmentService = new RecruitmentService()

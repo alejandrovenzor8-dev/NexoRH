@@ -61,7 +61,9 @@ export abstract class BaseService {
       ...config.headers,
     }
 
-    const url = `${this.apiUrl}${endpoint}`
+    // Asegurar que el endpoint tenga el prefijo /api
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`
+    const url = `${this.apiUrl}/api${normalizedEndpoint}`
 
     const fetchConfig: RequestInit = {
       method: config.method || 'GET',

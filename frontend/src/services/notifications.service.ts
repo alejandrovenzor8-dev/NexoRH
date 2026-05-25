@@ -13,91 +13,69 @@ import { Notification } from '@/types/notification'
 export class NotificationsService extends BaseService {
   /**
    * Obtener todas las notificaciones del usuario
-   * 
-   * @returns Array de notificaciones
-   * 
-   * TODO: Implementar cuando API esté disponible
    * GET /api/notifications
    */
   async getNotifications(): Promise<Notification[]> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.get<Notification[]>('/api/notifications')
-    return []
+    return this.get<Notification[]>('/notifications')
   }
 
   /**
    * Marcar una notificación como leída
-   * 
-   * @param notificationId - ID de la notificación
-   * 
-   * TODO: Implementar cuando API esté disponible
    * PATCH /api/notifications/:id/read
    */
   async markAsRead(notificationId: string): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.patch(`/api/notifications/${notificationId}/read`, {})
+    await this.patch(`/notifications/${notificationId}/read`, {})
   }
 
   /**
    * Marcar una notificación como no leída
-   * 
-   * @param notificationId - ID de la notificación
-   * 
-   * TODO: Implementar cuando API esté disponible
    * PATCH /api/notifications/:id/unread
    */
   async markAsUnread(notificationId: string): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.patch(`/api/notifications/${notificationId}/unread`, {})
+    // TODO: Implementar endpoint en backend si es necesario
+    console.warn('markAsUnread not implemented in backend yet')
   }
 
   /**
    * Marcar todas las notificaciones como leídas
-   * 
-   * TODO: Implementar cuando API esté disponible
    * PATCH /api/notifications/read-all
    */
   async markAllAsRead(): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.patch('/api/notifications/read-all', {})
+    await this.patch('/notifications/read-all', {})
   }
 
   /**
    * Eliminar una notificación
-   * 
-   * @param notificationId - ID de la notificación
-   * 
-   * TODO: Implementar cuando API esté disponible
    * DELETE /api/notifications/:id
    */
   async deleteNotification(notificationId: string): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.delete(`/api/notifications/${notificationId}`)
+    // TODO: Implementar endpoint en backend si es necesario
+    console.warn('deleteNotification not implemented in backend yet')
   }
 
   /**
    * Limpiar todas las notificaciones
-   * 
-   * TODO: Implementar cuando API esté disponible
    * DELETE /api/notifications/clear-all
    */
   async clearAllNotifications(): Promise<void> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // await this.delete('/api/notifications/clear-all')
+    // TODO: Implementar endpoint en backend si es necesario
+    console.warn('clearAllNotifications not implemented in backend yet')
   }
 
   /**
    * Obtener notificaciones no leídas
-   * 
-   * @returns Notificaciones no leídas
-   * 
-   * TODO: Implementar cuando API esté disponible
    * GET /api/notifications?read=false
    */
   async getUnreadNotifications(): Promise<Notification[]> {
-    // TODO: Reemplazar con búsqueda en API cuando esté disponible
     const all = await this.getNotifications()
     return all.filter((n) => !n.read)
+  }
+}
+
+/**
+ * Instancia singleton del servicio de notificaciones
+ */
+export const notificationsService = new NotificationsService()
   }
 
   /**

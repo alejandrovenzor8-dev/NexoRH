@@ -25,142 +25,94 @@ interface ApprovalPayload {
 export class PermissionsService extends BaseService {
   /**
    * Obtener todas las solicitudes de permiso
-   * 
-   * @returns Array de solicitudes de permiso
-   * 
-   * TODO: Implementar cuando API esté disponible
    * GET /api/permissions
    */
   async getPermissions(): Promise<PermissionRequest[]> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.get<PermissionRequest[]>('/api/permissions')
-    return []
+    return this.get<PermissionRequest[]>('/permissions')
   }
 
   /**
    * Obtener solicitud de permiso por ID
-   * 
-   * @param id - ID de la solicitud
-   * @returns Solicitud de permiso
-   * 
-   * TODO: Implementar cuando API esté disponible
    * GET /api/permissions/:id
    */
   async getPermissionById(id: string): Promise<PermissionRequest | null> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // try {
-    //   return await this.get<PermissionRequest>(`/api/permissions/${id}`)
-    // } catch {
-    //   return null
-    // }
-    return null
+    try {
+      return await this.get<PermissionRequest>(`/permissions/${id}`)
+    } catch {
+      return null
+    }
   }
 
   /**
    * Crear nueva solicitud de permiso
-   * 
-   * @param data - Datos de la nueva solicitud
-   * @returns Solicitud creada
-   * 
-   * TODO: Implementar cuando API esté disponible
    * POST /api/permissions
    */
   async createPermission(data: CreatePermissionDto): Promise<PermissionRequest> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.post<PermissionRequest>('/api/permissions', data)
-    throw new Error('Not implemented')
+    return this.post<PermissionRequest>('/permissions', data)
   }
 
   /**
    * Aprobar una solicitud de permiso
-   * 
-   * @param permissionId - ID de la solicitud
-   * @param comment - Comentario opcional
-   * @returns Solicitud actualizada
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * POST /api/permissions/:id/approve
+   * PATCH /api/permissions/:id
    */
   async approvePermission(
     permissionId: string,
     comment?: string
   ): Promise<PermissionRequest> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.post<PermissionRequest>(`/api/permissions/${permissionId}/approve`, { comment })
-    throw new Error('Not implemented')
+    return this.patch<PermissionRequest>(`/permissions/${permissionId}`, { 
+      status: 'approved',
+      comments: comment
+    })
   }
 
   /**
    * Rechazar una solicitud de permiso
-   * 
-   * @param permissionId - ID de la solicitud
-   * @param comment - Comentario de rechazo (recomendado)
-   * @returns Solicitud actualizada
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * POST /api/permissions/:id/reject
+   * PATCH /api/permissions/:id
    */
   async rejectPermission(
     permissionId: string,
     comment?: string
   ): Promise<PermissionRequest> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.post<PermissionRequest>(`/api/permissions/${permissionId}/reject`, { comment })
-    throw new Error('Not implemented')
+    return this.patch<PermissionRequest>(`/permissions/${permissionId}`, { 
+      status: 'rejected',
+      comments: comment
+    })
   }
 
   /**
    * Cancelar una solicitud de permiso
-   * 
-   * @param permissionId - ID de la solicitud
-   * @param comment - Comentario opcional
-   * @returns Solicitud actualizada
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * POST /api/permissions/:id/cancel
+   * PATCH /api/permissions/:id
    */
   async cancelPermission(
     permissionId: string,
     comment?: string
   ): Promise<PermissionRequest> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.post<PermissionRequest>(`/api/permissions/${permissionId}/cancel`, { comment })
-    throw new Error('Not implemented')
+    return this.patch<PermissionRequest>(`/permissions/${permissionId}`, { 
+      status: 'cancelled',
+      comments: comment
+    })
   }
 
   /**
    * Actualizar estado de una solicitud
-   * 
-   * @param permissionId - ID de la solicitud
-   * @param newStatus - Nuevo estado
-   * @param comment - Comentario opcional
-   * @returns Solicitud actualizada
-   * 
-   * TODO: Implementar cuando API esté disponible
-   * PATCH /api/permissions/:id/status
+   * PATCH /api/permissions/:id
    */
   async updatePermissionStatus(
     permissionId: string,
     newStatus: PermissionStatus,
     comment?: string
   ): Promise<PermissionRequest> {
-    // TODO: Reemplazar con llamada real a API cuando esté disponible
-    // return this.patch<PermissionRequest>(`/api/permissions/${permissionId}/status`, { status: newStatus, comment })
-    throw new Error('Not implemented')
+    return this.patch<PermissionRequest>(`/permissions/${permissionId}`, { 
+      status: newStatus,
+      comments: comment
+    })
   }
 
   /**
    * Buscar solicitudes de permisos con filtros
    * (Implementado en el cliente en el hook usePermissions)
-   * 
-   * @param filters - Criterios de búsqueda
-   * @returns Solicitudes que coinciden
-   * 
-   * TODO: Implementar búsqueda server-side cuando API esté disponible
-   * GET /api/permissions/search?...
    */
   async searchPermissions(filters: Record<string, unknown>): Promise<PermissionRequest[]> {
-    // TODO: Reemplazar con búsqueda en API cuando esté disponible
     return this.getPermissions()
   }
 }

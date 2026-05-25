@@ -28,8 +28,18 @@ export class CreateUserDto {
   @IsString()
   phone?: string;
 
+  @ApiPropertyOptional({ example: 'Tecnología' })
+  @IsOptional()
+  @IsString()
+  department?: string;
+
   @ApiPropertyOptional({ enum: Role, default: Role.USER })
   @IsOptional()
   @IsEnum(Role)
   role?: Role;
+
+  @ApiPropertyOptional({ example: 'active', default: 'active' })
+  @IsOptional()
+  @IsString()
+  status?: string;
 }

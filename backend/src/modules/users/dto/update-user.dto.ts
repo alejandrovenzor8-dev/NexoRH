@@ -13,6 +13,11 @@ export class UpdateUserDto {
   @IsString()
   phone?: string;
 
+  @ApiPropertyOptional({ example: 'Tecnología' })
+  @IsOptional()
+  @IsString()
+  department?: string;
+
   @ApiPropertyOptional({ enum: Role })
   @IsOptional()
   @IsEnum(Role)

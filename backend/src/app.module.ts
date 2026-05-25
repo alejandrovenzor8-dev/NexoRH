@@ -8,6 +8,8 @@ import { MessagingModule } from './modules/messaging/messaging.module';
 import { TablesModule } from './modules/tables/tables.module';
 import { RecruitmentModule } from './modules/recruitment/recruitment.module';
 import { AutomationModule } from './modules/automation/automation.module';
+import { PermissionsModule } from './modules/permissions/permissions.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
   imports: [
@@ -16,6 +18,8 @@ import { AutomationModule } from './modules/automation/automation.module';
     AuthModule,
     UsersModule,
     CompaniesModule,
+    PermissionsModule,
+    NotificationsModule,
     MessagingModule,
     TablesModule,
     RecruitmentModule,

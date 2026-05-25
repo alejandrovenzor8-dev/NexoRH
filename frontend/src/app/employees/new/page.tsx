@@ -9,12 +9,16 @@ import EmployeeForm, { EmployeeFormValues } from '@/components/employees/Employe
 import EmployeeSkeleton from '@/components/employees/EmployeeSkeleton'
 import { getCurrentUser } from '@/services/api'
 import { UserSession } from '@/types/auth'
+import { useEmployees } from '@/hooks/useEmployees'
 
 export default function NewEmployeePage() {
   const router = useRouter()
   const [user, setUser] = useState<UserSession | null>(null)
   const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { createEmployee } = useEmployees()
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -33,11 +37,30 @@ export default function NewEmployeePage() {
       .finally(() => setLoading(false))
   }, [router])
 
-  const handleSubmit = async (_values: EmployeeFormValues) => {
-    setSaved(true)
-    window.setTimeout(() => {
-      router.push('/employees?created=1')
-    }, 700)
+  const handleSubmit = async (values: EmployeeFormValues) => {
+    try {
+      setSaving(true)
+      setError(null)
+      
+      await createEmployee({
+        fullName: values.fullName,
+        email: values.email,
+        role: values.role,
+        status: values.status,
+        department: values.department,
+        phone: values.phone,
+      })
+      
+      setSaved(true)
+      window.setTimeout(() => {
+        router.push('/employees?created=1')
+      }, 700)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to create employee'
+      setError(errorMessage)
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) {
@@ -63,13 +86,18 @@ export default function NewEmployeePage() {
         />
 
         <EmployeeForm
-          submitLabel={saved ? 'Guardado' : 'Guardar empleado'}
+          submitLabel={saving ? 'Guardando...' : saved ? 'Guardado' : 'Guardar empleado'}
           onCancel={() => router.push('/employees')}
           onSubmit={handleSubmit}
+          disabled={saving}
         />
 
         {saved && (
           <p className="mt-3 text-sm text-emerald-600">Empleado creado correctamente. Redirigiendo...</p>
+        )}
+        
+        {error && (
+          <p className="mt-3 text-sm text-red-600">{error}</p>
         )}
       </section>
     </AppLayout>

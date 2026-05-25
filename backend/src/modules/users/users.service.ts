@@ -18,6 +18,7 @@ export class UsersService {
         phone: true,
         role: true,
         status: true,
+        department: true,
         companyId: true,
         createdAt: true,
       },
@@ -35,6 +36,7 @@ export class UsersService {
         phone: true,
         role: true,
         status: true,
+        department: true,
         companyId: true,
         createdAt: true,
       },
@@ -68,7 +70,9 @@ export class UsersService {
         email: dto.email,
         passwordHash,
         phone: dto.phone,
+        department: dto.department,
         role: dto.role || 'USER',
+        status: dto.status || 'active',
         companyId,
       },
       select: {
@@ -78,6 +82,7 @@ export class UsersService {
         phone: true,
         role: true,
         status: true,
+        department: true,
         companyId: true,
         createdAt: true,
       },
@@ -92,11 +97,13 @@ export class UsersService {
     const data: {
       fullName?: string;
       phone?: string;
+      department?: string;
       status?: string;
       role?: Role;
     } = {
       ...(dto.fullName !== undefined && { fullName: dto.fullName }),
       ...(dto.phone !== undefined && { phone: dto.phone }),
+      ...(dto.department !== undefined && { department: dto.department }),
       ...(dto.status !== undefined && { status: dto.status }),
     };
 
@@ -113,6 +120,7 @@ export class UsersService {
         email: true,
         phone: true,
         role: true,
+        department: true,
         status: true,
         companyId: true,
         createdAt: true,

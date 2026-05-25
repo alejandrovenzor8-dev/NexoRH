@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { Notification, NotificationType } from '@/types/notification'
 import { EmployeeRole } from '@/types/employee'
-import { formatRelativeMinutes, getSeedNotifications } from '@/components/notifications/notifications-data'
+import { formatRelativeMinutes } from '@/components/notifications/notifications-data'
 
 /**
  * Grouped notifications organized by type
@@ -86,15 +86,12 @@ const GROUP_ORDER: NotificationType[] = [
  */
 export function useNotifications(userRole?: EmployeeRole): UseNotificationsReturn {
   // Data state
-  const [notifications, setNotifications] = useState<Notification[]>(() =>
-    getSeedNotifications(userRole)
-  )
+  const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
 
   /**
    * Fetch notifications from API
-   * Currently uses seed data; ready for real API integration
    */
   const fetchNotifications = useCallback(async (): Promise<void> => {
     try {
@@ -103,29 +100,18 @@ export function useNotifications(userRole?: EmployeeRole): UseNotificationsRetur
 
       const token = localStorage.getItem('token')
       if (!token) {
-        // Not fatal - can work with empty notifications
         setNotifications([])
         return
       }
 
-      // TODO: Replace with actual API call when endpoint is available
-      // const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'
-      // const response = await fetch(`${API_URL}/api/notifications`, {
-      //   headers: { Authorization: `Bearer ${token}` }
-      // })
-      //
-      // if (!response.ok) {
-      //   throw new Error('Failed to fetch notifications')
-      // }
-      //
-      // const data = await response.json()
-      // setNotifications(data)
-
-      // Mock: Use seed data for now
-      setNotifications(getSeedNotifications(userRole))
+      // Use real API
+      const { notificationsService } = await import('@/services/notifications.service')
+      const data = await notificationsService.getNotifications()
+      setNotifications(data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to fetch notifications'
       setError(errorMessage)
+      setNotifications([])
     } finally {
       setLoading(false)
     }

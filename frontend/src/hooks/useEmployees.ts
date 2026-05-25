@@ -234,104 +234,82 @@ export function useEmployees(): UseEmployeesReturn {
 
   /**
    * Create a new employee
-   * Note: Currently mocked - update to call actual API endpoint when available
    */
   const createEmployee = useCallback(
     async (dto: CreateEmployeeDto): Promise<void> => {
       try {
         setError(null)
 
-        // TODO: Replace with actual API call when endpoint is available
-        // const token = localStorage.getItem('token')
-        // if (!token) throw new Error('No authentication token found')
-        //
-        // const response = await fetch(`${API_URL}/api/employees`, {
-        //   method: 'POST',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     'Authorization': `Bearer ${token}`
-        //   },
-        //   body: JSON.stringify(dto)
-        // })
-        //
-        // if (!response.ok) {
-        //   const error = await response.json()
-        //   throw new Error(error.message || 'Failed to create employee')
-        // }
+        const token = localStorage.getItem('token')
+        if (!token) throw new Error('No authentication token found')
 
-        // Mock: Add new employee to local state
-        const newEmployee: EmployeeRecord = {
-          id: `emp-${Date.now()}`,
-          fullName: dto.fullName,
-          email: dto.email,
-          role: dto.role,
-          status: dto.status,
-          department: dto.department,
-          phone: dto.phone,
-          createdAt: new Date().toISOString(),
-          companyId: '', // This should come from current user context
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            fullName: dto.fullName,
+            email: dto.email,
+            password: 'changeme123',
+            phone: dto.phone,
+            department: dto.department,
+            role: dto.role,
+            status: dto.status,
+          })
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message || 'Failed to create employee')
         }
 
-        setEmployees((prev) => [...prev, newEmployee])
+        // Refresh the employee list after creating
+        await fetchEmployees()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to create employee'
         setError(errorMessage)
         throw new Error(errorMessage)
       }
     },
-    []
+    [fetchEmployees]
   )
 
   /**
    * Update an existing employee
-   * Note: Currently mocked - update to call actual API endpoint when available
    */
   const updateEmployee = useCallback(
     async (id: string, dto: UpdateEmployeeDto): Promise<void> => {
       try {
         setError(null)
 
-        // TODO: Replace with actual API call when endpoint is available
-        // const token = localStorage.getItem('token')
-        // if (!token) throw new Error('No authentication token found')
-        //
-        // const response = await fetch(`${API_URL}/api/employees/${id}`, {
-        //   method: 'PATCH',
-        //   headers: {
-        //     'Content-Type': 'application/json',
-        //     'Authorization': `Bearer ${token}`
-        //   },
-        //   body: JSON.stringify(dto)
-        // })
-        //
-        // if (!response.ok) {
-        //   const error = await response.json()
-        //   throw new Error(error.message || 'Failed to update employee')
-        // }
+        const token = localStorage.getItem('token')
+        if (!token) throw new Error('No authentication token found')
 
-        // Mock: Update employee in local state
-        setEmployees((prev) =>
-          prev.map((emp) =>
-            emp.id === id
-              ? {
-                  ...emp,
-                  fullName: dto.fullName ?? emp.fullName,
-                  email: dto.email ?? emp.email,
-                  role: dto.role ?? emp.role,
-                  status: dto.status ?? emp.status,
-                  department: dto.department ?? emp.department,
-                  phone: dto.phone ?? emp.phone,
-                }
-              : emp
-          )
-        )
+        const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/${id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(dto)
+        })
+
+        if (!response.ok) {
+          const error = await response.json()
+          throw new Error(error.message || 'Failed to update employee')
+        }
+
+        // Refresh the employee list after updating
+        await fetchEmployees()
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to update employee'
         setError(errorMessage)
         throw new Error(errorMessage)
       }
     },
-    []
+    [fetchEmployees]
   )
 
   /**

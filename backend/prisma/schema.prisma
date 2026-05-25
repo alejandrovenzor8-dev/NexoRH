@@ -8,27 +8,110 @@ datasource db {
 }
 
 model Company {
-  id        String   @id @default(cuid())
-  name      String
-  createdAt DateTime @default(now()) @map("created_at")
-  users     User[]
+  id           String        @id @default(cuid())
+  name         String
+  createdAt    DateTime      @default(now()) @map("created_at")
+  users        User[]
+  permissions  Permission[]
+  notifications Notification[]
+  candidates   Candidate[]
 
   @@map("companies")
 }
 
 model User {
-  id           String   @id @default(cuid())
-  fullName     String   @map("full_name")
-  email        String   @unique
-  passwordHash String   @map("password_hash")
-  phone        String?
-  role         Role     @default(USER)
-  status       String   @default("active")
-  companyId    String   @map("company_id")
-  company      Company  @relation(fields: [companyId], references: [id])
-  createdAt    DateTime @default(now()) @map("created_at")
+  id                  String         @id @default(cuid())
+  fullName            String         @map("full_name")
+  email               String         @unique
+  passwordHash        String         @map("password_hash")
+  phone               String?
+  role                Role           @default(USER)
+  status              String         @default("active")
+  department          String?
+  companyId           String         @map("company_id")
+  company             Company        @relation(fields: [companyId], references: [id])
+  createdAt           DateTime       @default(now()) @map("created_at")
+  permissions         Permission[]
+  sentNotifications   Notification[] @relation("NotificationSender")
 
   @@map("users")
+}
+
+model Permission {
+  id          String   @id @default(cuid())
+  userId      String   @map("user_id")
+  user        User     @relation(fields: [userId], references: [id])
+  companyId   String   @map("company_id")
+  company     Company  @relation(fields: [companyId], references: [id])
+  type        String
+  startDate   DateTime @map("start_date")
+  endDate     DateTime @map("end_date")
+  status      String   @default("pending")
+  reason      String?
+  comments    String?
+  manager     String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("permissions")
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  companyId   String   @map("company_id")
+  company     Company  @relation(fields: [companyId], references: [id])
+  userId      String?  @map("user_id")
+  sender      User?    @relation("NotificationSender", fields: [userId], references: [id])
+  type        String
+  title       String
+  body        String
+  href        String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@map("notifications")
+}
+
+model Candidate {
+  id          String      @id @default(cuid())
+  companyId   String      @map("company_id")
+  company     Company     @relation(fields: [companyId], references: [id])
+  fullName    String      @map("full_name")
+  email       String
+  phone       String?
+  avatar      String?
+  position    String
+  source      String
+  stage       String      @default("applied")
+  priority    String      @default("medium")
+  score       Float?
+  rating      Int?
+  tags        String[]    @default([])
+  recruiter   String?
+  notes       String?
+  cvUrl       String?     @map("cv_url")
+  linkedinUrl String?     @map("linkedin_url")
+  appliedAt   DateTime    @default(now()) @map("applied_at")
+  updatedAt   DateTime    @updatedAt @map("updated_at")
+  interviews  Interview[]
+
+  @@map("candidates")
+}
+
+model Interview {
+  id           String    @id @default(cuid())
+  candidateId  String    @map("candidate_id")
+  candidate    Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  type         String
+  date         DateTime
+  time         String?
+  interviewer  String?
+  notes        String?
+  feedback     String?
+  result       String?   @default("pending")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@map("interviews")
 }
 
 enum Role {
